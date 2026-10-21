@@ -1,3 +1,3 @@
 //! Configuration model, TOML loading, diff engine and API call planner for
-//! nextform.
+//! ndac.
 #![forbid(unsafe_code)]

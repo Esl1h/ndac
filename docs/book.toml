@@ -1,10 +1,10 @@
 [book]
-title = "nextform"
+title = "NextDNS-as-Code (ndac)"
 description = "NextDNS profiles as code"
 authors = ["Esli Silva"]
 language = "en"
 src = "src"
 
 [output.html]
-git-repository-url = "https://github.com/Esl1h/nextform"
-edit-url-template = "https://github.com/Esl1h/nextform/edit/main/docs/{path}"
+git-repository-url = "https://github.com/Esl1h/ndac"
+edit-url-template = "https://github.com/Esl1h/ndac/edit/main/docs/{path}"

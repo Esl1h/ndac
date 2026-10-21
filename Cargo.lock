@@ -3,24 +3,24 @@
 version = 4
 
 [[package]]
-name = "nextform-api"
-version = "0.0.0"
-
-[[package]]
-name = "nextform-cli"
+name = "ndac"
 version = "0.0.0"
 dependencies = [
- "nextform-core",
- "nextform-testkit",
+ "ndac-core",
+ "ndac-testkit",
 ]
 
 [[package]]
-name = "nextform-core"
+name = "ndac-api"
+version = "0.0.0"
+
+[[package]]
+name = "ndac-core"
 version = "0.0.0"
 dependencies = [
- "nextform-api",
+ "ndac-api",
 ]
 
 [[package]]
-name = "nextform-testkit"
+name = "ndac-testkit"
 version = "0.0.0"

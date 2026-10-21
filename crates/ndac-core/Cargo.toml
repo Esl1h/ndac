@@ -1,6 +1,6 @@
 [package]
-name = "nextform-cli"
-description = "Manage NextDNS profiles declaratively from TOML files"
+name = "ndac-core"
+description = "Configuration model, diff engine and planner for ndac"
 readme = "../../README.md"
 version.workspace = true
 edition.workspace = true
@@ -12,15 +12,8 @@ authors.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
-[[bin]]
-name = "nextform"
-path = "src/main.rs"
-
 [dependencies]
-nextform-core.workspace = true
-
-[dev-dependencies]
-nextform-testkit.workspace = true
+ndac-api.workspace = true
 
 [lints]
 workspace = true

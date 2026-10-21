@@ -9,16 +9,16 @@ edition = "2024"
 # headroom and is what the msrv CI job tests.
 rust-version = "1.89"
 license = "MIT OR Apache-2.0"
-repository = "https://github.com/Esl1h/nextform"
-homepage = "https://github.com/Esl1h/nextform"
+repository = "https://github.com/Esl1h/ndac"
+homepage = "https://github.com/Esl1h/ndac"
 authors = ["Esli Silva"]
 keywords = ["nextdns", "dns", "gitops", "infrastructure-as-code", "cli"]
 categories = ["command-line-utilities", "network-programming"]
 
 [workspace.dependencies]
-nextform-api = { path = "crates/nextform-api", version = "0.0.0" }
-nextform-core = { path = "crates/nextform-core", version = "0.0.0" }
-nextform-testkit = { path = "crates/nextform-testkit" }
+ndac-api = { path = "crates/ndac-api", version = "0.0.0" }
+ndac-core = { path = "crates/ndac-core", version = "0.0.0" }
+ndac-testkit = { path = "crates/ndac-testkit" }
 
 [workspace.lints.rust]
 unsafe_code = "deny"

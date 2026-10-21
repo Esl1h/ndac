@@ -4,8 +4,8 @@
 /fuzz/artifacts/
 /fuzz/coverage/
 /docs/book/
-.nextform/
-nextform.local.toml
+.ndac/
+ndac.local.toml
 .env
 *.profraw
 lcov.info

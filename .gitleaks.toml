@@ -1,4 +1,4 @@
-title = "nextform gitleaks config"
+title = "ndac gitleaks config"
 
 [extend]
 useDefault = true
@@ -22,5 +22,5 @@ description = "Test fixtures and snapshots"
 paths = [
   '''crates/[^/]+/tests/fixtures/''',
   '''crates/[^/]+/tests/snapshots/''',
-  '''crates/nextform-testkit/''',
+  '''crates/ndac-testkit/''',
 ]

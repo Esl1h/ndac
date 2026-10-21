@@ -1,4 +1,4 @@
-# Contributing to nextform
+# Contributing to ndac
 
 Thanks for your interest. Please read the [Code of Conduct](CODE_OF_CONDUCT.md)
 first. For anything larger than a small fix, open an issue to discuss the
@@ -59,7 +59,7 @@ but CI does not enforce them.
 ## Tests
 
 - New behavior needs tests; bug fixes need a test that fails without the fix.
-- Tests never touch the network. Use the fake API in `nextform-testkit`.
+- Tests never touch the network. Use the fake API in `ndac-testkit`.
 - Snapshot tests use [insta](https://insta.rs); review changes with
   `cargo insta review` and commit the updated snapshots.
 - If you change configuration types, regenerate the JSON Schema and commit it.

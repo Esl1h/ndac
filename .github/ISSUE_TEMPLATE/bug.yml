@@ -10,8 +10,8 @@ body:
   - type: input
     id: version
     attributes:
-      label: nextform version
-      description: Output of `nextform --version`
+      label: ndac version
+      description: Output of `ndac --version`
     validations:
       required: true
   - type: input
@@ -46,7 +46,7 @@ body:
     id: plan
     attributes:
       label: Plan output
-      description: If relevant, the redacted output of `nextform plan --format json`
+      description: If relevant, the redacted output of `ndac plan --format json`
       render: json
   - type: checkboxes
     id: secrets

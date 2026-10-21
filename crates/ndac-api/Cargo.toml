@@ -1,6 +1,6 @@
 [package]
-name = "nextform-api"
-description = "Typed client for the NextDNS API used by nextform"
+name = "ndac-api"
+description = "Typed client for the NextDNS API used by ndac"
 readme = "../../README.md"
 version.workspace = true
 edition.workspace = true

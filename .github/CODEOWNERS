@@ -6,4 +6,4 @@
 /.github/ @Esl1h
 /deny.toml @Esl1h
 /.gitleaks.toml @Esl1h
-/crates/nextform-core/src/auth/ @Esl1h
+/crates/ndac-core/src/auth/ @Esl1h

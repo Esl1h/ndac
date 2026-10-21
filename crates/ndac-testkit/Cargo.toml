@@ -1,6 +1,6 @@
 [package]
-name = "nextform-testkit"
-description = "Stateful fake NextDNS API and fixtures for nextform tests"
+name = "ndac-testkit"
+description = "Stateful fake NextDNS API and fixtures for ndac tests"
 publish = false
 version.workspace = true
 edition.workspace = true

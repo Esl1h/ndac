@@ -10,7 +10,7 @@ released.
 ## Reporting a vulnerability
 
 Please report vulnerabilities privately through
-[GitHub private vulnerability reporting](https://github.com/Esl1h/nextform/security/advisories/new).
+[GitHub private vulnerability reporting](https://github.com/Esl1h/ndac/security/advisories/new).
 Do not open a public issue, pull request or discussion.
 
 Include the affected version, your platform, the steps to reproduce, and the
@@ -36,7 +36,7 @@ In scope:
 - Execution of `cmd:` auth sources (argument parsing, environment, timeouts).
 - File permissions and git-tracking guardrails for files holding secrets.
 - Write-back to TOML files, snapshot files and lock files.
-- The fake API in `nextform-testkit` only insofar as it could leak into release
+- The fake API in `ndac-testkit` only insofar as it could leak into release
   builds.
 - Supply chain: release artifacts, signatures, attestations, SBOMs, container
   images and the CI workflows that produce them.
