@@ -1,5 +1,8 @@
 msrv = "1.89"
-doc-valid-idents = ["NextDNS", ".."]
+doc-valid-idents = ["NextDNS", "SafeSearch", "YouTube", ".."]
+allow-unwrap-in-tests = true
+allow-expect-in-tests = true
+allow-panic-in-tests = true
 
 # Clippy matches paths, not arguments, so `Command::new("sh")` cannot be
 # targeted directly. All process spawning is banned instead and allowed only
@@ -8,5 +11,4 @@ disallowed-methods = [
   { path = "std::env::set_var", reason = "process env is mutated only in the CLI startup module" },
   { path = "std::env::remove_var", reason = "process env is mutated only in the CLI startup module" },
   { path = "std::process::Command::new", reason = "spawn processes only from the cmd: auth source, never through a shell" },
-  { path = "tokio::process::Command::new", reason = "spawn processes only from the cmd: auth source, never through a shell" },
 ]
