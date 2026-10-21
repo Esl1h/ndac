@@ -5,6 +5,7 @@
 //! is unmanaged, unknown live fields are ignored, and paths listed in
 //! `ignore` are pruned from both sides.
 
+mod drift;
 mod render;
 mod target;
 
@@ -14,6 +15,7 @@ use ndac_api::Profile;
 use serde::Serialize;
 use serde_json::Value;
 
+pub use drift::{drift_only, drift_sections, render_github, render_prom};
 pub use render::{
     MARKDOWN_LIMIT, PLAN_FORMAT_VERSION, render_json, render_markdown, render_text, summary_line,
 };
@@ -259,12 +261,12 @@ pub fn get<'a>(v: &'a Value, path: &str) -> Option<&'a Value> {
         .filter(|v| !v.is_null())
 }
 
-fn is_list(path: &str) -> Option<bool> {
+pub(crate) fn is_list(path: &str) -> Option<bool> {
     LIST_PATHS.iter().find(|(p, _)| *p == path).map(|(_, a)| *a)
 }
 
 /// Items of a list value: ID to `active` (`None` for ID-only lists).
-fn items(v: Option<&Value>, has_active: bool) -> BTreeMap<String, Option<bool>> {
+pub(crate) fn items(v: Option<&Value>, has_active: bool) -> BTreeMap<String, Option<bool>> {
     v.and_then(Value::as_array)
         .into_iter()
         .flatten()
