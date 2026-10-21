@@ -369,7 +369,7 @@ mod tests {
     fn documented_profile_round_trips() {
         let value = documented_example();
         let profile: Profile = serde_json::from_value(value.clone()).expect("deserialize");
-        assert!(profile.unknown_fields().is_empty());
+        assert_eq!(profile.unknown_fields(), Vec::<String>::new());
         assert_eq!(serde_json::to_value(&profile).expect("serialize"), value);
     }
 
