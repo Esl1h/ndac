@@ -1,0 +1,10 @@
+[book]
+title = "nextform"
+description = "NextDNS profiles as code"
+authors = ["Esli Silva"]
+language = "en"
+src = "src"
+
+[output.html]
+git-repository-url = "https://github.com/Esl1h/nextform"
+edit-url-template = "https://github.com/Esl1h/nextform/edit/main/docs/{path}"
