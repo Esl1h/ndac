@@ -12,19 +12,33 @@ authors.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+[features]
+default = ["keyring"]
+# OS keyring source (Secret Service on Linux, Keychain on macOS).
+keyring = ["dep:keyring"]
+# `age:` source: decrypts with the `age` binary, so plugins such as
+# age-plugin-yubikey work.
+age = []
+
 [dependencies]
+dotenvy.workspace = true
 globset.workspace = true
 idna.workspace = true
+keyring = { workspace = true, optional = true }
 miette.workspace = true
 ndac-api.workspace = true
 schemars.workspace = true
 serde.workspace = true
 serde_json.workspace = true
+shell-words.workspace = true
 strsim.workspace = true
 thiserror.workspace = true
 toml.workspace = true
 toml_edit.workspace = true
 tracing.workspace = true
+
+[target.'cfg(unix)'.dependencies]
+nix = { workspace = true, features = ["user"] }
 
 [dev-dependencies]
 insta.workspace = true
