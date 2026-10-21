@@ -1,0 +1,12 @@
+[files]
+extend-exclude = [
+  "LICENSE-*",
+  "CODE_OF_CONDUCT.md",
+  "**/tests/fixtures/**",
+  "**/tests/snapshots/**",
+  "schema/*.json",
+]
+
+[default]
+# NextDNS profile IDs are short random alphanumerics.
+extend-ignore-re = ['''\b[0-9a-f]{6}\b''']
