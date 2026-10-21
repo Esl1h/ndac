@@ -35,6 +35,17 @@ patterns.
 - List items with an `active` flag are assumed to be active when the flag is
   missing.
 
+## Configuration
+
+- NextDNS is assumed to ignore list order, so lists are compared and
+  rendered sorted by ID.
+- Domains are validated locally (lowercase punycode, at least two labels, no
+  wildcards). NextDNS may accept or reject a slightly different set.
+- Blocklist, native, service and category IDs are not checked against a
+  catalog: the catalog endpoints are not documented.
+- There are two JSON Schemas (root file and profile/template files) instead
+  of one, because the two kinds of files have different shapes.
+
 ## Fake API
 
 `ndac-testkit` follows the documented semantics. Where the documentation is
