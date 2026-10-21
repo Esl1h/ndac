@@ -5,7 +5,7 @@ mod common;
 
 use common::{ROOT, render, workspace};
 use ndac_api::{ActiveItem, IdItem};
-use ndac_core::config::{ListMode, Workspace, discover, types::OnSourceError};
+use ndac_core::config::{ConfigError, ListMode, Workspace, discover, types::OnSourceError};
 
 const BASE: &str = r#"
 [security]
@@ -317,7 +317,14 @@ fn symlink_escape_is_rejected() {
     )
     .unwrap();
     let err = Workspace::load(&root).unwrap_err();
-    assert!(render(&err).contains("outside the configuration root"));
+    // Checked by variant: rendered text wraps long temp paths (macOS).
+    assert!(
+        err.errors
+            .iter()
+            .any(|e| matches!(e, ConfigError::Escape { .. })),
+        "{}",
+        render(&err)
+    );
 }
 
 #[test]
