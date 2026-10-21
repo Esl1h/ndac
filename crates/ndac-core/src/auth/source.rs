@@ -150,7 +150,7 @@ mod tests {
 
     #[test]
     fn a_pasted_key_is_never_echoed() {
-        let key = "0123456789abcdef0123456789abcdef01234567";
+        let key = "test-key-0000000000000000000000000000000000";
         let err = key.parse::<SourceRef>().unwrap_err();
         assert!(!err.to_string().contains(key), "{err}");
     }

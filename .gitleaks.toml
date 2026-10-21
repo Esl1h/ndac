@@ -15,7 +15,12 @@ keywords = ["nextdns", "api_key", "api-key", "apikey", "x-api-key"]
 [[allowlists]]
 description = "Obviously fake keys used by tests and fixtures"
 regexTarget = "secret"
-regexes = ['''^0{40}$''', '''^(?:test-?key-?)?0+$''']
+regexes = [
+  '''^0{40}$''',
+  '''^(?:test-?key-?)?0+$''',
+  # Fake key once used by an auth test; kept so history scans stay clean.
+  '''^0123456789abcdef0123456789abcdef01234567$''',
+]
 
 [[allowlists]]
 description = "Test fixtures and snapshots"
