@@ -62,6 +62,15 @@ patterns.
 - The per-user configuration file under `XDG_CONFIG_HOME` is not
   implemented yet; `ndac.local.toml` covers machine-specific settings.
 
+## Apply
+
+- The Ctrl-C path is not covered by automated tests; it relies on checking
+  a flag between calls.
+- The lock is advisory and per checkout: two checkouts of the same
+  repository can still apply concurrently.
+- `ndac init` does not write a CI workflow yet; the GitHub Actions example
+  is added with the documentation phase.
+
 ## Fake API
 
 `ndac-testkit` follows the documented semantics. Where the documentation is
