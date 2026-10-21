@@ -198,6 +198,28 @@ pub struct ProfileFile {
     /// General settings.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub settings: Option<SettingsConfig>,
+    /// Settings for `ndac endpoint render`; never sent to NextDNS. Profiles
+    /// only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub endpoint: Option<EndpointConfig>,
+}
+
+/// `[endpoint]`: options for the NextDNS client configuration that
+/// `ndac endpoint render --target nextdns-cli` prints.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields, rename_all = "camelCase")]
+pub struct EndpointConfig {
+    /// Other profiles for some clients, first match wins: a CIDR
+    /// (`"10.0.3.0/24"`), MAC address, interface name or `@user`, mapped to
+    /// a profile key or NextDNS profile ID.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub conditional: BTreeMap<String, String>,
+    /// Client cache size, e.g. `"10MB"`; `"0"` disables the cache.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub cache_size: Option<String>,
+    /// Send client names and models with queries.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub report_client_info: Option<bool>,
 }
 
 /// `[security]`.

@@ -121,6 +121,34 @@
       ],
       "description": "A duration: integer seconds or a string such as `\"90d\"` or `\"1h30m\"`."
     },
+    "EndpointConfig": {
+      "additionalProperties": false,
+      "description": "`[endpoint]`: options for the NextDNS client configuration that\n`ndac endpoint render --target nextdns-cli` prints.",
+      "properties": {
+        "cacheSize": {
+          "description": "Client cache size, e.g. `\"10MB\"`; `\"0\"` disables the cache.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "conditional": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "Other profiles for some clients, first match wins: a CIDR\n(`\"10.0.3.0/24\"`), MAC address, interface name or `@user`, mapped to\na profile key or NextDNS profile ID.",
+          "type": "object"
+        },
+        "reportClientInfo": {
+          "description": "Send client names and models with queries.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
     "ItemValue": {
       "anyOf": [
         {
@@ -544,6 +572,17 @@
         }
       ],
       "description": "Blocked domains."
+    },
+    "endpoint": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EndpointConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Settings for `ndac endpoint render`; never sent to NextDNS. Profiles\nonly."
     },
     "extends": {
       "description": "Templates to deep-merge first, in order; later ones win.",

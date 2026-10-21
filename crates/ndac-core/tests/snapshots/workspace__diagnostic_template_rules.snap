@@ -26,7 +26,7 @@ Error: ndac::config::invalid
    ·  ╰── profiles only
  2 │ [denylist]
    ╰────
-  help: `id`, `name`, `ignore`, `auth` and list `mode` are not inherited
+  help: `id`, `name`, `ignore`, `auth`, `endpoint` and list `mode` are not inherited
 
 Error: ndac::config::invalid
 

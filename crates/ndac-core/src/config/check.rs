@@ -175,11 +175,12 @@ pub(crate) fn profile_file(
 
 /// Fields that templates may not set.
 fn template_only(src: &SourceFile, f: &ProfileFile, out: &mut Vec<ConfigError>) {
-    let forbidden: [(&str, bool); 4] = [
+    let forbidden: [(&str, bool); 5] = [
         ("id", f.id.is_some()),
         ("name", f.name.is_some()),
         ("ignore", !f.ignore.is_empty()),
         ("auth", f.auth.is_some()),
+        ("endpoint", f.endpoint.is_some()),
     ];
     for (key, present) in forbidden {
         if present {
@@ -187,7 +188,10 @@ fn template_only(src: &SourceFile, f: &ProfileFile, out: &mut Vec<ConfigError>) 
                 src.key_span(&[Seg::Key(key)]),
                 format!("`{key}` is not allowed in a template"),
                 "profiles only",
-                Some("`id`, `name`, `ignore`, `auth` and list `mode` are not inherited".into()),
+                Some(
+                    "`id`, `name`, `ignore`, `auth`, `endpoint` and list `mode` are not inherited"
+                        .into(),
+                ),
             ));
         }
     }

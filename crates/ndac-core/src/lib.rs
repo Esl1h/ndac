@@ -6,6 +6,7 @@ pub mod apply;
 pub mod auth;
 pub mod client;
 pub mod config;
+pub mod endpoint;
 pub mod paths;
 pub mod plan;
 pub mod reconcile;

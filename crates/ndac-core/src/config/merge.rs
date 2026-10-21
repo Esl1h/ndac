@@ -4,7 +4,8 @@
 //! - ID arrays replace the inherited array, except that `"$inherit"`
 //!   expands to it in place; duplicates keep their first occurrence;
 //! - item maps merge by key, and `"$remove"` deletes an inherited key;
-//! - `id`, `name`, `ignore`, `auth` and list `mode` are never inherited.
+//! - `id`, `name`, `ignore`, `auth`, `endpoint` and list `mode` are never
+//!   inherited.
 //!
 //! A profile resolves by applying layers in order onto an empty file: each
 //! template in `extends` (its own `extends` first, recursively), then the
@@ -35,6 +36,7 @@ pub fn merge(base: ProfileFile, over: ProfileFile) -> ProfileFile {
         denylist: domain_list(base.denylist, over.denylist),
         allowlist: domain_list(base.allowlist, over.allowlist),
         settings: opt(base.settings, over.settings, settings),
+        endpoint: over.endpoint,
     }
 }
 
