@@ -130,6 +130,40 @@ pub(crate) enum Command {
         allow_destroy: bool,
     },
 
+    /// Report changes made outside ndac since the last apply. Exits with 2
+    /// when there is drift.
+    Drift {
+        /// Limit to profiles or paths, as for `plan`. Repeatable.
+        #[arg(long = "target", value_name = "PATH")]
+        targets: Vec<String>,
+        /// Output format.
+        #[arg(long, value_enum, default_value_t = DriftFormat::Text)]
+        format: DriftFormat,
+        /// With `--format prom`, write `ndac_drift.prom` atomically into this
+        /// directory (`node_exporter` textfile collector) instead of stdout.
+        #[arg(long, value_name = "DIR")]
+        textfile_dir: Option<std::path::PathBuf>,
+    },
+
+    /// Resolve drift: overwrite the live value, import it into the
+    /// configuration, or skip, item by item.
+    Reconcile {
+        /// Limit to profiles or paths, as for `plan`. Repeatable.
+        #[arg(long = "target", value_name = "PATH")]
+        targets: Vec<String>,
+        /// Answer every item this way: `code` overwrites NextDNS, `live`
+        /// imports into the configuration.
+        #[arg(long, value_enum)]
+        prefer: Option<Prefer>,
+        /// Never prompt; imports go into the profile file. Requires
+        /// `--prefer`.
+        #[arg(long, requires = "prefer")]
+        non_interactive: bool,
+        /// Do not add `# imported <date> (drift)` comments to edited lines.
+        #[arg(long)]
+        no_comment: bool,
+    },
+
     /// Write live profiles to TOML files under profiles/.
     Import {
         /// Profile ID to import. Repeatable.
@@ -233,6 +267,24 @@ pub(crate) enum Backend {
     Config,
     /// A file with mode 0600, for `file:` or `systemd-cred:` sources.
     File,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub(crate) enum DriftFormat {
+    Text,
+    Json,
+    /// `::warning` workflow annotations.
+    Github,
+    /// Prometheus text format.
+    Prom,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub(crate) enum Prefer {
+    /// Keep the configuration: overwrite NextDNS.
+    Code,
+    /// Keep NextDNS: import into the configuration.
+    Live,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]

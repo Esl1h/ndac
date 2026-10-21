@@ -46,6 +46,24 @@ fn main() -> ExitCode {
             detailed_exitcode,
             format,
         } => commands::plan::run(&cli.global, &targets, detailed_exitcode, format, out),
+        Command::Drift {
+            targets,
+            format,
+            textfile_dir,
+        } => commands::drift::run(&cli.global, &targets, format, textfile_dir.as_deref(), out),
+        Command::Reconcile {
+            targets,
+            prefer,
+            non_interactive,
+            no_comment,
+        } => commands::reconcile::run(
+            &cli.global,
+            &targets,
+            prefer,
+            non_interactive,
+            no_comment,
+            out,
+        ),
         Command::Apply {
             targets,
             auto_approve,

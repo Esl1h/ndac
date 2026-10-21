@@ -15,3 +15,5 @@ extend-ignore-re = ['''\b[0-9a-f]{6}\b''']
 [default.extend-words]
 bse = "bse"
 privcy = "privcy"
+# Prompt shortcuts such as "[i]mport" and "[o]verwrite".
+mport = "mport"

@@ -44,7 +44,6 @@ pub(crate) enum Exit {
     Success = 0,
     Error = 1,
     /// Changes or drift pending (`plan --detailed-exitcode`, `drift`).
-    #[allow(dead_code, reason = "used from Phase 4 on")]
     Changes = 2,
     Auth = 3,
     Config = 4,
