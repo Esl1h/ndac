@@ -26,10 +26,14 @@ allow = [
   "Zlib",
   # Weak, file-level copyleft: compatible with distributing a binary under
   # MIT/Apache-2.0 as long as MPL files stay unmodified or their source is
-  # offered. Typical source: webpki/rustls root store data.
+  # offered.
   "MPL-2.0",
 ]
-exceptions = []
+exceptions = [
+  # Mozilla's root certificate data, used by rustls-platform-verifier as a
+  # fallback trust store. A permissive license for data, not code.
+  { allow = ["CDLA-Permissive-2.0"], crate = "webpki-root-certs" },
+]
 
 [bans]
 multiple-versions = "warn"
