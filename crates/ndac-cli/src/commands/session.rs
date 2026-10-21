@@ -47,7 +47,16 @@ impl<'a> Session<'a> {
     /// The client for `profile`'s auth chain. Profiles sharing a chain share
     /// one resolution, so a `cmd:` source prompts at most once.
     pub(crate) fn client(&mut self, profile: &str) -> Result<Client, Failure> {
-        let chain = auth::chain_for(&self.ws, Some(profile), &self.global.auth_source)?;
+        self.client_for(Some(profile))
+    }
+
+    /// The client for the root `[auth]` chain (no profile in scope).
+    pub(crate) fn root_client(&mut self) -> Result<Client, Failure> {
+        self.client_for(None)
+    }
+
+    fn client_for(&mut self, profile: Option<&str>) -> Result<Client, Failure> {
+        let chain = auth::chain_for(&self.ws, profile, &self.global.auth_source)?;
         let cache_key = chain
             .iter()
             .map(ToString::to_string)
@@ -58,7 +67,7 @@ impl<'a> Session<'a> {
         }
         let ctx = auth::context(
             &self.ws,
-            Some(profile),
+            profile,
             &self.cwd,
             self.global.allow_tracked_secret,
             &SystemEnv,

@@ -49,6 +49,8 @@ pub(crate) enum Exit {
     Auth = 3,
     Config = 4,
     Api = 5,
+    /// Stopped by Ctrl-C.
+    Interrupted = 130,
 }
 
 impl From<Exit> for ExitCode {

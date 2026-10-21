@@ -46,6 +46,28 @@ fn main() -> ExitCode {
             detailed_exitcode,
             format,
         } => commands::plan::run(&cli.global, &targets, detailed_exitcode, format, out),
+        Command::Apply {
+            targets,
+            auto_approve,
+            allow_destroy,
+        } => commands::apply::run(&cli.global, &targets, auto_approve, allow_destroy, out),
+        Command::Rollback {
+            snapshot,
+            profile,
+            auto_approve,
+        } => commands::apply::rollback(
+            &cli.global,
+            &snapshot,
+            profile.as_deref(),
+            auto_approve,
+            out,
+        ),
+        Command::Import {
+            profiles,
+            all,
+            force,
+        } => commands::import::run(&cli.global, &profiles, all, force, out),
+        Command::Init { dir } => commands::init::run(&dir, out),
         Command::Snapshot(SnapshotCommand::List { profile }) => {
             commands::snapshot::list(config, profile.as_deref())
         }

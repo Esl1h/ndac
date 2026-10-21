@@ -10,8 +10,12 @@ use ndac_core::config::{ConfigErrors, Workspace, discover};
 
 use crate::output::Exit;
 
+pub(crate) mod apply;
 pub(crate) mod auth;
+pub(crate) mod engine;
 pub(crate) mod fmt;
+pub(crate) mod import;
+pub(crate) mod init;
 pub(crate) mod plan;
 pub(crate) mod render;
 pub(crate) mod schema;

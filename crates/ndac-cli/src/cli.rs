@@ -116,6 +116,52 @@ pub(crate) enum Command {
         format: PlanFormat,
     },
 
+    /// Apply the plan: snapshot, change, verify.
+    Apply {
+        /// Limit to profiles or paths, as for `plan`. Repeatable.
+        #[arg(long = "target", value_name = "PATH")]
+        targets: Vec<String>,
+        /// Do not ask for confirmation.
+        #[arg(long)]
+        auto_approve: bool,
+        /// Allow emptying authoritative lists and deleting profiles whose
+        /// file was removed.
+        #[arg(long)]
+        allow_destroy: bool,
+    },
+
+    /// Write live profiles to TOML files under profiles/.
+    Import {
+        /// Profile ID to import. Repeatable.
+        #[arg(long = "profile", value_name = "ID", required_unless_present = "all")]
+        profiles: Vec<String>,
+        /// Import every profile of the account.
+        #[arg(long, conflicts_with = "profiles")]
+        all: bool,
+        /// Overwrite existing files for the same profile.
+        #[arg(long)]
+        force: bool,
+    },
+
+    /// Re-apply a snapshot as the desired state of its profile.
+    Rollback {
+        /// Snapshot ID or a unique prefix.
+        snapshot: String,
+        /// Look for the snapshot only in this profile.
+        #[arg(long)]
+        profile: Option<String>,
+        /// Do not ask for confirmation.
+        #[arg(long)]
+        auto_approve: bool,
+    },
+
+    /// Scaffold a configuration repository.
+    Init {
+        /// Directory to initialize.
+        #[arg(default_value = ".")]
+        dir: std::path::PathBuf,
+    },
+
     /// Inspect local snapshots.
     #[command(subcommand)]
     Snapshot(SnapshotCommand),
