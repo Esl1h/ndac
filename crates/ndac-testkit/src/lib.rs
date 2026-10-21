@@ -239,6 +239,13 @@ impl FakeApi {
         lock(&self.state).profiles.get(id).cloned()
     }
 
+    /// Changes a stored profile in place, as an edit in the dashboard
+    /// would. Returns false when there is no such profile.
+    pub fn edit_profile(&self, id: &str, edit: impl FnOnce(&mut Value)) -> bool {
+        let mut s = lock(&self.state);
+        s.profiles.get_mut(id).map(edit).is_some()
+    }
+
     /// Every request received so far.
     #[must_use]
     pub fn requests(&self) -> Vec<RecordedRequest> {
