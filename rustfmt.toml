@@ -1,0 +1,3 @@
+# imports_granularity and group_imports are nightly-only, so they are omitted
+# to keep `cargo fmt` warning-free on stable. See CONTRIBUTING.md.
+edition = "2024"

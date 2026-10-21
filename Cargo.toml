@@ -1,0 +1,43 @@
+[workspace]
+resolver = "3"
+members = ["crates/*"]
+
+[workspace.package]
+version = "0.0.0"
+edition = "2024"
+# Floor set by keyring 4, proptest 1.12 and time 0.3.55 (all 1.88); 1.89 adds
+# headroom and is what the msrv CI job tests.
+rust-version = "1.89"
+license = "MIT OR Apache-2.0"
+repository = "https://github.com/Esl1h/nextform"
+homepage = "https://github.com/Esl1h/nextform"
+authors = ["Esli Silva"]
+keywords = ["nextdns", "dns", "gitops", "infrastructure-as-code", "cli"]
+categories = ["command-line-utilities", "network-programming"]
+
+[workspace.dependencies]
+nextform-api = { path = "crates/nextform-api", version = "0.0.0" }
+nextform-core = { path = "crates/nextform-core", version = "0.0.0" }
+nextform-testkit = { path = "crates/nextform-testkit" }
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+missing_docs = "warn"
+unreachable_pub = "warn"
+
+[workspace.lints.clippy]
+all = { level = "deny", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+unwrap_used = "deny"
+expect_used = "warn"
+panic = "deny"
+dbg_macro = "deny"
+print_stdout = "warn"
+module_name_repetitions = "allow"
+
+[profile.release]
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
+panic = "abort"
+opt-level = 3

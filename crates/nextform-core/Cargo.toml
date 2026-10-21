@@ -1,0 +1,19 @@
+[package]
+name = "nextform-core"
+description = "Configuration model, diff engine and planner for nextform"
+readme = "../../README.md"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+keywords.workspace = true
+categories.workspace = true
+
+[dependencies]
+nextform-api.workspace = true
+
+[lints]
+workspace = true

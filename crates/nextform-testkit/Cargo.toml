@@ -1,0 +1,13 @@
+[package]
+name = "nextform-testkit"
+description = "Stateful fake NextDNS API and fixtures for nextform tests"
+publish = false
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+
+[lints]
+workspace = true

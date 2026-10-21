@@ -1,0 +1,12 @@
+msrv = "1.89"
+doc-valid-idents = ["NextDNS", ".."]
+
+# Clippy matches paths, not arguments, so `Command::new("sh")` cannot be
+# targeted directly. All process spawning is banned instead and allowed only
+# in the `cmd:` auth source module, which never goes through a shell.
+disallowed-methods = [
+  { path = "std::env::set_var", reason = "process env is mutated only in the CLI startup module" },
+  { path = "std::env::remove_var", reason = "process env is mutated only in the CLI startup module" },
+  { path = "std::process::Command::new", reason = "spawn processes only from the cmd: auth source, never through a shell" },
+  { path = "tokio::process::Command::new", reason = "spawn processes only from the cmd: auth source, never through a shell" },
+]
