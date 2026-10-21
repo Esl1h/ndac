@@ -22,12 +22,12 @@ lint:
 
 # Run all tests, including doctests
 test:
-    cargo nextest run --workspace --all-features --no-tests=pass
+    cargo nextest run --workspace --all-features
     cargo test --doc --workspace --all-features
 
 # Line coverage report in target/llvm-cov/html
 cov:
-    cargo llvm-cov nextest --workspace --all-features --no-tests=pass --html
+    cargo llvm-cov nextest --workspace --all-features --html
 
 # Build API docs and the mdBook
 docs:

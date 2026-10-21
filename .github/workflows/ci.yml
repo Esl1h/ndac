@@ -89,8 +89,7 @@ jobs:
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
           tool: cargo-nextest
-      # --no-tests=pass only while the workspace has no tests (Phase 0).
-      - run: cargo nextest run --workspace --all-features --locked --no-tests=pass
+      - run: cargo nextest run --workspace --all-features --locked
       - run: cargo test --doc --workspace --all-features --locked
 
   msrv:
@@ -194,7 +193,7 @@ jobs:
       - uses: taiki-e/install-action@8cca0918f8471c33515202b73f56ab27f2bed283 # v2.87.29
         with:
           tool: cargo-llvm-cov,cargo-nextest
-      - run: cargo llvm-cov nextest --workspace --all-features --locked --no-tests=pass --lcov --output-path lcov.info
+      - run: cargo llvm-cov nextest --workspace --all-features --locked --lcov --output-path lcov.info
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: lcov
