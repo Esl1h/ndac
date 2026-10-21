@@ -12,7 +12,7 @@ mod commands;
 mod hardening;
 mod output;
 
-use cli::{AuthCommand, Cli, Command, GlobalArgs, LogFormat, SnapshotCommand};
+use cli::{AuthCommand, Cli, Command, EndpointCommand, GlobalArgs, LogFormat, SnapshotCommand};
 use output::{Exit, Output, RedactingStderr};
 
 fn main() -> ExitCode {
@@ -35,8 +35,20 @@ fn main() -> ExitCode {
     init_logging(&cli.global, out.color);
     install_miette_hook(out.color);
 
+    match dispatch(cli, out) {
+        Ok(code) => code.into(),
+        Err(failure) => {
+            let code = failure.exit();
+            let text = format!("{:?}", failure.report());
+            eprintln!("{}", ndac_core::auth::redact(&text));
+            code.into()
+        }
+    }
+}
+
+fn dispatch(cli: Cli, out: Output) -> commands::CmdResult {
     let config = cli.global.config.as_deref();
-    let result = match cli.command {
+    match cli.command {
         Command::Validate => commands::validate::run(config, out),
         Command::Render { profile, format } => commands::render::run(config, &profile, format),
         Command::Fmt { check } => commands::fmt::run(config, check, out),
@@ -86,6 +98,23 @@ fn main() -> ExitCode {
             force,
         } => commands::import::run(&cli.global, &profiles, all, force, out),
         Command::Init { dir } => commands::init::run(&dir, out),
+        Command::Endpoint(EndpointCommand::Render {
+            profile,
+            target,
+            device,
+        }) => commands::endpoint::render(config, &profile, target, device.as_deref()),
+        Command::Doctor {
+            expect_profile,
+            expect_device,
+            url,
+        } => commands::doctor::run(
+            config,
+            expect_profile.as_deref(),
+            expect_device.as_deref(),
+            &url,
+        ),
+        Command::Completions { shell } => commands::generate::completions(shell),
+        Command::Man => commands::generate::man(),
         Command::Snapshot(SnapshotCommand::List { profile }) => {
             commands::snapshot::list(config, profile.as_deref())
         }
@@ -106,15 +135,6 @@ fn main() -> ExitCode {
             keyring,
             path,
         }) => commands::auth::set(&cli.global, backend, &keyring, path.as_deref(), out),
-    };
-    match result {
-        Ok(code) => code.into(),
-        Err(failure) => {
-            let code = failure.exit();
-            let text = format!("{:?}", failure.report());
-            eprintln!("{}", ndac_core::auth::redact(&text));
-            code.into()
-        }
     }
 }
 

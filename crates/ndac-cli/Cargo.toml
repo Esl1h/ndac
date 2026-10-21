@@ -23,6 +23,8 @@ age = ["ndac-core/age"]
 
 [dependencies]
 clap.workspace = true
+clap_complete.workspace = true
+clap_mangen.workspace = true
 miette = { workspace = true, features = ["fancy-no-backtrace"] }
 ndac-api.workspace = true
 ndac-core = { workspace = true, default-features = false }

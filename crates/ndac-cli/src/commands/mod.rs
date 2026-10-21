@@ -12,9 +12,12 @@ use crate::output::Exit;
 
 pub(crate) mod apply;
 pub(crate) mod auth;
+pub(crate) mod doctor;
 pub(crate) mod drift;
+pub(crate) mod endpoint;
 pub(crate) mod engine;
 pub(crate) mod fmt;
+pub(crate) mod generate;
 pub(crate) mod import;
 pub(crate) mod init;
 pub(crate) mod plan;

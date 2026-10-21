@@ -196,6 +196,34 @@ pub(crate) enum Command {
         dir: std::path::PathBuf,
     },
 
+    /// Print configuration for devices and resolvers. Never installs
+    /// anything.
+    #[command(subcommand)]
+    Endpoint(EndpointCommand),
+
+    /// Check whether this host's DNS queries reach NextDNS, using
+    /// test.nextdns.io. Exits with 2 on a mismatch. The API key is not used.
+    Doctor {
+        /// Profile key or NextDNS profile ID the queries should use.
+        #[arg(long, value_name = "PROFILE")]
+        expect_profile: Option<String>,
+        /// Device name the queries should carry.
+        #[arg(long, value_name = "NAME")]
+        expect_device: Option<String>,
+        /// Test service URL.
+        #[arg(long, hide = true, env = "NDAC_DOCTOR_URL", default_value = ndac_api::TEST_URL)]
+        url: String,
+    },
+
+    /// Print shell completions.
+    Completions {
+        /// Target shell.
+        shell: clap_complete::Shell,
+    },
+
+    /// Print the man page (roff).
+    Man,
+
     /// Inspect local snapshots.
     #[command(subcommand)]
     Snapshot(SnapshotCommand),
@@ -292,6 +320,35 @@ pub(crate) enum PlanFormat {
     Text,
     Json,
     Markdown,
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum EndpointCommand {
+    /// Print configuration text for one profile to stdout.
+    Render {
+        /// Profile key (file stem under profiles/).
+        profile: String,
+        /// What to generate.
+        #[arg(long, value_enum)]
+        target: EndpointTarget,
+        /// Device name, so queries show up under it in NextDNS logs.
+        #[arg(long, value_name = "NAME")]
+        device: Option<String>,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub(crate) enum EndpointTarget {
+    /// /etc/nextdns.conf for the nextdns client.
+    NextdnsCli,
+    /// A systemd-resolved drop-in (DNS over TLS).
+    Resolved,
+    /// nmcli commands (DNS over TLS through systemd-resolved).
+    Networkmanager,
+    /// The Android Private DNS hostname.
+    Android,
+    /// The DNS-over-HTTPS URL.
+    DohUrl,
 }
 
 #[derive(Debug, Subcommand)]

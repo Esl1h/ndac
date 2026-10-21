@@ -1,5 +1,5 @@
 msrv = "1.89"
-doc-valid-idents = ["NextDNS", "SafeSearch", "YouTube", ".."]
+doc-valid-idents = ["NextDNS", "NetworkManager", "SafeSearch", "YouTube", ".."]
 allow-unwrap-in-tests = true
 allow-expect-in-tests = true
 allow-panic-in-tests = true
