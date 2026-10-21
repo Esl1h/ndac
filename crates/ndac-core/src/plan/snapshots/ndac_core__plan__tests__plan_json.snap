@@ -1,0 +1,94 @@
+---
+source: crates/ndac-core/src/plan/tests.rs
+expression: render_json(&plan)
+---
+{
+  "format_version": 1,
+  "summary": {
+    "add": 4,
+    "change": 3,
+    "remove": 1,
+    "profiles": 2,
+    "drift_sections": 1
+  },
+  "profiles": [
+    {
+      "key": "casa",
+      "id": "abc123",
+      "create": false,
+      "list_modes": {
+        "allowlist": "merge",
+        "denylist": "authoritative"
+      },
+      "changes": [
+        {
+          "op": "add_item",
+          "list": "privacy.blocklists",
+          "id": "hagezi-pro",
+          "active": null,
+          "origin": "pending"
+        },
+        {
+          "op": "set_item_active",
+          "list": "denylist",
+          "id": "bad.example",
+          "from": true,
+          "to": false,
+          "origin": "pending"
+        },
+        {
+          "op": "remove_item",
+          "list": "denylist",
+          "id": "foo.example",
+          "origin": "drift"
+        },
+        {
+          "op": "add_item",
+          "list": "allowlist",
+          "id": "s.youtube.com",
+          "active": true,
+          "origin": "pending"
+        },
+        {
+          "op": "set_field",
+          "path": "settings.logs.retention",
+          "from": 7776000,
+          "to": 2592000,
+          "origin": "pending"
+        }
+      ]
+    },
+    {
+      "key": "novo",
+      "create": true,
+      "changes": [
+        {
+          "op": "set_field",
+          "path": "name",
+          "from": null,
+          "to": "Novo",
+          "origin": "pending"
+        },
+        {
+          "op": "add_item",
+          "list": "privacy.blocklists",
+          "id": "oisd",
+          "active": null,
+          "origin": "pending"
+        }
+      ]
+    },
+    {
+      "key": "trabalho",
+      "id": "def456",
+      "create": false,
+      "changes": []
+    }
+  ],
+  "removed": [
+    {
+      "key": "old",
+      "id": "zzz999"
+    }
+  ]
+}

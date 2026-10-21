@@ -54,6 +54,14 @@ struct Rendered<'a> {
 }
 
 impl DesiredProfile {
+    /// Normalizes an already merged file (no `extends` left to apply).
+    #[must_use]
+    pub fn from_resolved(key: &str, file: ProfileFile) -> Self {
+        let mut file = file;
+        prenormalize(&mut file);
+        desired(key, file, PathBuf::new())
+    }
+
     /// `render --format json` output.
     #[must_use]
     pub fn to_json(&self) -> String {

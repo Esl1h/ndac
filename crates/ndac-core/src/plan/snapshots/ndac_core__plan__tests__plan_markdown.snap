@@ -1,0 +1,31 @@
+---
+source: crates/ndac-core/src/plan/tests.rs
+expression: render_markdown(&plan)
+---
+## ndac plan
+
+**Plan: 4 to add, 3 to change, 1 to remove across 2 profiles. Drift in 1 section.**
+
+<details><summary><code>casa</code> (abc123): 5 change(s)</summary>
+
+```diff
++ privacy.blocklists: hagezi-pro
+! denylist: bad.example active true → false
+- denylist: foo.example  [drift]
++ allowlist: s.youtube.com
+! settings.logs.retention: 7776000 → 2592000
+```
+
+</details>
+<details><summary><code>novo</code>: 3 change(s)</summary>
+
+```diff
++ profile will be created
+! name: (unset) → "Novo"
++ privacy.blocklists: oisd
+```
+
+</details>
+- `trabalho`: no changes
+
+- profile "old" (zzz999): configuration file removed; `ndac apply --allow-destroy` deletes it

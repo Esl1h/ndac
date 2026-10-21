@@ -6,3 +6,5 @@ pub mod auth;
 pub mod client;
 pub mod config;
 pub mod paths;
+pub mod plan;
+pub mod snapshot;
