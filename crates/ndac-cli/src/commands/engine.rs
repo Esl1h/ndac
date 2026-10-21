@@ -284,7 +284,15 @@ pub(crate) fn run(
             .rt
             .block_on(client.get_profile(&id))
             .map_err(Failure::api)?;
-        let remaining = plan::diff(&w.desired, Some(&after));
+        // Only what was planned counts: `--target` and `reconcile` leave
+        // other differences alone on purpose.
+        let mut remaining = plan::diff(&w.desired, Some(&after));
+        remaining.changes.retain(|c| {
+            w.plan
+                .changes
+                .iter()
+                .any(|p| p.path() == c.path() && p.item() == c.item())
+        });
         let complete = outcome.error.is_none() && outcome.done == total;
         let kind = if remaining.changes.is_empty() && complete {
             SnapshotKind::PostApply

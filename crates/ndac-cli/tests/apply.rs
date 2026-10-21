@@ -313,3 +313,23 @@ async fn concurrent_apply_is_locked_out() {
     assert!(err(&o).contains("another apply is running"), "{}", err(&o));
     drop(held);
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn targeted_apply_verifies_only_the_target() {
+    let api = FakeApi::start().await.unwrap();
+    let id = api.insert_profile(&json!({ "name": "A", "settings": { "web3": false } }));
+    let dir = init(&api);
+    fs::write(
+        dir.path().join("profiles/p.toml"),
+        format!("id = {id:?}\nname = \"B\"\n[settings]\nweb3 = true\n"),
+    )
+    .unwrap();
+    let mut cmd = ndac(dir.path());
+    cmd.args(["apply", "--auto-approve", "--target", "p.name"]);
+    let o = run(cmd).await;
+    assert!(o.status.success(), "{}", err(&o));
+    assert!(err(&o).contains("applied and verified"), "{}", err(&o));
+    let live = api.profile(&id).unwrap();
+    assert_eq!(live["name"], "B");
+    assert_eq!(live["settings"]["web3"], false);
+}
