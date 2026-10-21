@@ -46,6 +46,22 @@ patterns.
 - There are two JSON Schemas (root file and profile/template files) instead
   of one, because the two kinds of files have different shapes.
 
+## Authentication
+
+- The API documentation describes one key per account and no scopes; the
+  threat model assumes a key grants full account access.
+- On a machine without a keyring service (servers, CI), a `keyring:` source
+  is treated as missing rather than failed, so the default chain keeps
+  working there. A locked keyring is a failure.
+- `env:` variables are not removed from the process environment after being
+  read: doing so requires `unsafe` in Rust 2024, and `ndac` starts children
+  only with a cleared environment.
+- The `age:` source shells out to the `age` binary instead of using the
+  `age` crate, so identities from plugins work the same way as with the
+  command-line tool.
+- The per-user configuration file under `XDG_CONFIG_HOME` is not
+  implemented yet; `ndac.local.toml` covers machine-specific settings.
+
 ## Fake API
 
 `ndac-testkit` follows the documented semantics. Where the documentation is
