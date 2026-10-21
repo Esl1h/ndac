@@ -18,6 +18,7 @@ mod error;
 mod key;
 mod model;
 mod paths;
+mod resolver;
 mod retry;
 
 pub use client::{Client, ClientBuilder, DEFAULT_BASE_URL};
@@ -28,4 +29,5 @@ pub use model::{
     Profile, ProfileSummary, Security, Settings,
 };
 pub use paths::{ListPath, ObjectPath};
+pub use resolver::{ResolverTest, TEST_URL, test_resolver};
 pub use retry::RetryPolicy;

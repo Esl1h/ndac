@@ -778,7 +778,7 @@ fn encode(body: &impl Serialize) -> Result<Vec<u8>, Error> {
     })
 }
 
-fn validate_base_url(raw: &str) -> Result<Url, Error> {
+pub(crate) fn validate_base_url(raw: &str) -> Result<Url, Error> {
     let invalid = |why: &str| Error::InvalidBaseUrl(format!("{raw}: {why}"));
     let url = Url::parse(raw).map_err(|e| invalid(&e.to_string()))?;
     if !url.username().is_empty() || url.password().is_some() {
