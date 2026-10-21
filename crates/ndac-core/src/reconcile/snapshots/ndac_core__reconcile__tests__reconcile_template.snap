@@ -1,0 +1,12 @@
+---
+source: crates/ndac-core/src/reconcile/tests.rs
+expression: "fs::read_to_string(dir.path().join(\"templates/base.toml\")).unwrap()"
+---
+[security]
+tlds = ["zip"]
+
+[privacy]
+blocklists        = ["oisd"] # imported 2026-10-21 (drift)
+disguisedTrackers = false # imported 2026-10-21 (drift)
+
+[parentalControl.services]

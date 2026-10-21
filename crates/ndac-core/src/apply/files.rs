@@ -66,7 +66,7 @@ pub fn slug(name: &str) -> String {
 }
 
 /// Seconds as the shortest exact duration string, e.g. `7776000` → `"90d"`.
-fn duration(secs: u64) -> Option<String> {
+pub(crate) fn duration(secs: u64) -> Option<String> {
     [
         ("y", 31_536_000),
         ("w", 604_800),

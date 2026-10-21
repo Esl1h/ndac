@@ -8,4 +8,5 @@ pub mod client;
 pub mod config;
 pub mod paths;
 pub mod plan;
+pub mod reconcile;
 pub mod snapshot;

@@ -1,0 +1,28 @@
+---
+source: crates/ndac-core/src/reconcile/tests.rs
+expression: "fs::read_to_string(dir.path().join(\"profiles/casa.toml\")).unwrap()"
+---
+# Casa
+id      = "abc123"
+name    = "Casa" # the house
+extends = ["base"]
+
+[settings]
+web3 = true # keep off
+
+[denylist]
+mode = "authoritative"
+
+[denylist.items]
+"Foo.example" = false # imported 2026-10-21 (drift)
+"new.example" = true # imported 2026-10-21 (drift)
+
+[security]
+tlds = ["$inherit", "ru"] # imported 2026-10-21 (drift)
+
+[privacy]
+blocklists = ["oisd"] # imported 2026-10-21 (drift)
+disguisedTrackers = false # imported 2026-10-21 (drift)
+
+[parentalControl.services]
+tiktok = "$remove" # imported 2026-10-21 (drift)
