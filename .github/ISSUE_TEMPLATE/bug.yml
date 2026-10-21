@@ -1,0 +1,57 @@
+name: Bug report
+description: Something does not work as documented
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Never paste a real API key. Redact profile IDs and domains you do not
+        want public.
+  - type: input
+    id: version
+    attributes:
+      label: nextform version
+      description: Output of `nextform --version`
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Operating system and architecture
+      placeholder: Fedora 44, x86_64
+    validations:
+      required: true
+  - type: textarea
+    id: command
+    attributes:
+      label: Command run
+      render: shell
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior and redacted output
+      description: Include the full error message. Run with `-vv` if useful.
+      render: text
+    validations:
+      required: true
+  - type: textarea
+    id: plan
+    attributes:
+      label: Plan output
+      description: If relevant, the redacted output of `nextform plan --format json`
+      render: json
+  - type: checkboxes
+    id: secrets
+    attributes:
+      label: Secrets
+      options:
+        - label: I confirm this report contains no API key or other secret
+          required: true

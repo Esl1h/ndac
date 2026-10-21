@@ -1,0 +1,9 @@
+# Default owner for everything.
+* @Esl1h
+
+# Security-sensitive paths. Listed explicitly so that new maintainers added
+# above do not automatically gain review authority over them.
+/.github/ @Esl1h
+/deny.toml @Esl1h
+/.gitleaks.toml @Esl1h
+/crates/nextform-core/src/auth/ @Esl1h
