@@ -1,0 +1,26 @@
+title = "nextform gitleaks config"
+
+[extend]
+useDefault = true
+
+# NextDNS API keys observed in the dashboard are 40 lowercase hex characters.
+# The format is not documented by NextDNS, see docs/src/known-limitations.md.
+[[rules]]
+id = "nextdns-api-key"
+description = "NextDNS API key"
+regex = '''(?i)(?:nextdns|api[_-]?key|x-api-key)(?:[\w."'\[\]-]{0,30})\s*[:=]\s*["']?([0-9a-f]{40})\b'''
+secretGroup = 1
+keywords = ["nextdns", "api_key", "api-key", "apikey", "x-api-key"]
+
+[[allowlists]]
+description = "Obviously fake keys used by tests and fixtures"
+regexTarget = "secret"
+regexes = ['''^0{40}$''', '''^(?:test-?key-?)?0+$''']
+
+[[allowlists]]
+description = "Test fixtures and snapshots"
+paths = [
+  '''crates/[^/]+/tests/fixtures/''',
+  '''crates/[^/]+/tests/snapshots/''',
+  '''crates/nextform-testkit/''',
+]
