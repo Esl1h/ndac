@@ -677,6 +677,63 @@ fn merge_lenient(target: &mut Value, patch: &Value) {
     }
 }
 
+/// A stand-in for `test.nextdns.io`: answers every `GET` with a fixed JSON
+/// body and records request headers. Stops when dropped.
+#[derive(Debug)]
+pub struct FakeResolverTest {
+    addr: SocketAddr,
+    headers: Arc<Mutex<Vec<HeaderMap>>>,
+    task: JoinHandle<()>,
+}
+
+impl Drop for FakeResolverTest {
+    fn drop(&mut self) {
+        self.task.abort();
+    }
+}
+
+impl FakeResolverTest {
+    /// Starts the server on `127.0.0.1` with an ephemeral port.
+    ///
+    /// # Errors
+    ///
+    /// If the listener cannot be bound.
+    pub async fn start(body: Value) -> io::Result<Self> {
+        let headers = Arc::new(Mutex::new(Vec::new()));
+        let seen = Arc::clone(&headers);
+        let listener = TcpListener::bind(("127.0.0.1", 0)).await?;
+        let addr = listener.local_addr()?;
+        let app = Router::new().fallback(move |h: HeaderMap| {
+            seen.lock().unwrap_or_else(PoisonError::into_inner).push(h);
+            let body = body.clone();
+            async move { axum::Json(body) }
+        });
+        let task = tokio::spawn(async move {
+            let _ = axum::serve(listener, app).await;
+        });
+        Ok(Self {
+            addr,
+            headers,
+            task,
+        })
+    }
+
+    /// Base URL, e.g. `http://127.0.0.1:41234`.
+    #[must_use]
+    pub fn url(&self) -> String {
+        format!("http://{}", self.addr)
+    }
+
+    /// Headers of every request received so far.
+    #[must_use]
+    pub fn headers(&self) -> Vec<HeaderMap> {
+        self.headers
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+            .clone()
+    }
+}
+
 /// The documented profile shape with every flag off and lists empty.
 #[must_use]
 pub fn default_profile() -> Value {
