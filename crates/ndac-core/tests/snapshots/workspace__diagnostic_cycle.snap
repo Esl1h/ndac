@@ -1,0 +1,16 @@
+---
+source: crates/ndac-core/tests/workspace.rs
+expression: out
+---
+ndac::config
+
+  × configuration has 1 error(s)
+
+Error: ndac::config::invalid
+
+  × template cycle: a -> b -> a
+   ╭─[templates/b.toml:1:12]
+ 1 │ extends = ["a"]
+   ·            ─┬─
+   ·             ╰── closes the cycle
+   ╰────

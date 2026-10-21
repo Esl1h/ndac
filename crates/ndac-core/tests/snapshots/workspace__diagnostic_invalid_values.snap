@@ -1,0 +1,74 @@
+---
+source: crates/ndac-core/tests/workspace.rs
+expression: out
+---
+ndac::config
+
+  × configuration has 6 error(s)
+
+Error: ndac::config::invalid
+
+  × invalid profile id "ABC 1"
+   ╭─[profiles/p.toml:1:6]
+ 1 │ id = "ABC 1"
+   ·      ───┬───
+   ·         ╰── lowercase letters and digits only
+ 2 │ ignore = ["settings.log"]
+   ╰────
+  help: copy the ID shown in the NextDNS dashboard URL
+
+Error: ndac::config::invalid
+
+  × unknown path `settings.log` in ignore
+   ╭─[profiles/p.toml:2:11]
+ 1 │ id = "ABC 1"
+ 2 │ ignore = ["settings.log"]
+   ·           ───────┬──────
+   ·                  ╰── not a profile field
+ 3 │ 
+   ╰────
+  help: did you mean `settings.logs`?
+
+Error: ndac::config::invalid
+
+  × duplicate `ru` in security.tlds
+   ╭─[profiles/p.toml:5:15]
+ 4 │ [security]
+ 5 │ tlds = ["ru", "ru"]
+   ·               ──┬─
+   ·                 ╰── already listed at position 1
+ 6 │ 
+   ╰────
+
+Error: ndac::config::invalid
+
+  × invalid domain "*.example.com"
+   ╭─[profiles/p.toml:8:1]
+ 7 │ [denylist.items]
+ 8 │ "*.example.com" = true
+   · ───────┬───────
+   ·        ╰── only plain domain names are allowed (no wildcards, schemes, paths or ports); subdomains are covered automatically
+ 9 │ "Example.com" = true
+   ╰────
+
+Error: ndac::config::invalid
+
+  × duplicate entry `example.com` in denylist.items
+    ╭─[profiles/p.toml:10:1]
+  9 │ "Example.com" = true
+ 10 │ "example.com." = false
+    · ───────┬──────
+    ·        ╰── same as `Example.com` after normalization
+ 11 │ 
+    ╰────
+
+Error: ndac::config::invalid
+
+  × invalid duration: unknown unit `x` (use s, m, h, d, w or y)
+    ╭─[profiles/p.toml:13:13]
+ 12 │ [settings.logs]
+ 13 │ retention = "30x"
+    ·             ──┬──
+    ·               ╰── here
+    ╰────
+  help: use seconds or units like "30d", "1h30m"

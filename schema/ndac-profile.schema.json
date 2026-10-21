@@ -1,0 +1,623 @@
+{
+  "$defs": {
+    "AuthConfig": {
+      "additionalProperties": false,
+      "description": "`[auth]`.",
+      "properties": {
+        "allow_insecure_permissions": {
+          "description": "Downgrade insecure file permissions from an error to a warning.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "api_key": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SecretValue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Literal API key. Prefer `ndac.local.toml` or another source."
+        },
+        "cmd_timeout": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DurationValue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Timeout for `cmd:` sources, e.g. `\"30s\"`."
+        },
+        "on_source_error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OnSourceError"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "What to do when a source exists but fails."
+        },
+        "quiet_literal": {
+          "description": "Silence the warning printed when a literal key is used.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "sources": {
+          "description": "Ordered key sources, e.g. `[\"env:NEXTDNS_API_KEY\", \"keyring:nextdns/default\"]`.",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "BlockPageConfig": {
+      "additionalProperties": false,
+      "description": "`[settings.blockPage]`.",
+      "properties": {
+        "enabled": {
+          "description": "Block page enabled.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "DomainListConfig": {
+      "additionalProperties": false,
+      "description": "`[denylist]` or `[allowlist]`.",
+      "properties": {
+        "items": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ItemValue"
+          },
+          "description": "Domain to active flag.",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "mode": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ListMode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "`authoritative` (default) removes live items absent here; `merge`\nonly manages the listed items. Profiles only."
+        }
+      },
+      "type": "object"
+    },
+    "DurationValue": {
+      "anyOf": [
+        {
+          "description": "Seconds.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "description": "Units `s`, `m`, `h`, `d`, `w`, `y` (365 days), combinable.",
+          "type": "string"
+        }
+      ],
+      "description": "A duration: integer seconds or a string such as `\"90d\"` or `\"1h30m\"`."
+    },
+    "ItemValue": {
+      "anyOf": [
+        {
+          "description": "Present, active or inactive.",
+          "type": "boolean"
+        },
+        {
+          "$ref": "#/$defs/Marker",
+          "description": "Remove the inherited entry."
+        }
+      ],
+      "description": "Value of an [`ItemMap`] entry."
+    },
+    "ListMode": {
+      "description": "How a list is reconciled.",
+      "oneOf": [
+        {
+          "const": "authoritative",
+          "description": "The configuration is the complete list.",
+          "type": "string"
+        },
+        {
+          "const": "merge",
+          "description": "Only listed items are managed.",
+          "type": "string"
+        }
+      ]
+    },
+    "LogsConfig": {
+      "additionalProperties": false,
+      "description": "`[settings.logs]`.",
+      "properties": {
+        "drop": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LogsDropConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Data dropped from logs."
+        },
+        "enabled": {
+          "description": "Logging enabled.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "location": {
+          "description": "Storage location, e.g. `\"eu\"`.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "retention": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DurationValue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Retention: integer seconds or e.g. `\"30d\"`."
+        }
+      },
+      "type": "object"
+    },
+    "LogsDropConfig": {
+      "additionalProperties": false,
+      "description": "`[settings.logs.drop]`.",
+      "properties": {
+        "domain": {
+          "description": "Do not log domains.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "ip": {
+          "description": "Do not log client IPs.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "Marker": {
+      "description": "Merge markers usable in item maps.",
+      "oneOf": [
+        {
+          "const": "$remove",
+          "description": "Delete the inherited key.",
+          "type": "string"
+        }
+      ]
+    },
+    "OnSourceError": {
+      "description": "Behavior when an auth source exists but fails.",
+      "oneOf": [
+        {
+          "const": "fail",
+          "description": "Abort (default).",
+          "type": "string"
+        },
+        {
+          "const": "skip",
+          "description": "Try the next source.",
+          "type": "string"
+        }
+      ]
+    },
+    "ParentalControlConfig": {
+      "additionalProperties": false,
+      "description": "`[parentalControl]`.",
+      "properties": {
+        "blockBypass": {
+          "description": "Block bypass methods.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "categories": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ItemValue"
+          },
+          "description": "Category ID to active flag, e.g. `{ gambling = true }`.",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "safeSearch": {
+          "description": "Enforce SafeSearch.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "services": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ItemValue"
+          },
+          "description": "Service ID to active flag, e.g. `{ tiktok = true }`.",
+          "type": [
+            "object",
+            "null"
+          ]
+        },
+        "youtubeRestrictedMode": {
+          "description": "Enforce YouTube restricted mode.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "PerformanceConfig": {
+      "additionalProperties": false,
+      "description": "`[settings.performance]`.",
+      "properties": {
+        "cacheBoost": {
+          "description": "Cache boost.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "cnameFlattening": {
+          "description": "CNAME flattening.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "ecs": {
+          "description": "EDNS Client Subnet.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "PrivacyConfig": {
+      "additionalProperties": false,
+      "description": "`[privacy]`.",
+      "properties": {
+        "allowAffiliate": {
+          "description": "Allow affiliate and tracking links.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "blocklists": {
+          "description": "Blocklist IDs, e.g. `[\"nextdns-recommended\", \"oisd\"]`. `\"$inherit\"`\nexpands to the inherited list.",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "disguisedTrackers": {
+          "description": "Block disguised third-party trackers.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "natives": {
+          "description": "Native tracking IDs, e.g. `[\"samsung\"]`. `\"$inherit\"` expands to the\ninherited list.",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "SecretValue": {
+      "description": "A secret string. Serializes and prints as `<redacted>`.",
+      "type": "string"
+    },
+    "SecurityConfig": {
+      "additionalProperties": false,
+      "description": "`[security]`.",
+      "properties": {
+        "aiThreatDetection": {
+          "description": "AI-driven threat detection.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "cryptojacking": {
+          "description": "Cryptojacking protection.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "csam": {
+          "description": "Block child sexual abuse material.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "ddns": {
+          "description": "Block dynamic DNS hostnames.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "dga": {
+          "description": "Domain generation algorithm protection.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "dnsRebinding": {
+          "description": "DNS rebinding protection.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "googleSafeBrowsing": {
+          "description": "Google Safe Browsing.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "idnHomographs": {
+          "description": "IDN homograph attack protection.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "nrd": {
+          "description": "Block newly registered domains.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "parking": {
+          "description": "Block parked domains.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "threatIntelligenceFeeds": {
+          "description": "Threat intelligence feeds.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "tlds": {
+          "description": "Blocked TLDs, e.g. `[\"ru\", \"zip\"]`. `\"$inherit\"` expands to the\ninherited list.",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        },
+        "typosquatting": {
+          "description": "Typosquatting protection.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "SettingsConfig": {
+      "additionalProperties": false,
+      "description": "`[settings]`.",
+      "properties": {
+        "blockPage": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BlockPageConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Block page."
+        },
+        "logs": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/LogsConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Query logging."
+        },
+        "performance": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PerformanceConfig"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Performance options."
+        },
+        "web3": {
+          "description": "Web3 domain resolution.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "A template or profile file. The file stem is the key.",
+  "properties": {
+    "allowlist": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DomainListConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Allowed domains."
+    },
+    "auth": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AuthConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Per-profile auth override, e.g. for a separate account. Profiles only."
+    },
+    "denylist": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/DomainListConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Blocked domains."
+    },
+    "extends": {
+      "description": "Templates to deep-merge first, in order; later ones win.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "id": {
+      "description": "NextDNS profile ID. Empty or absent: created on apply. Profiles only.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "ignore": {
+      "description": "Dotted paths never planned, e.g. `parentalControl.services`. Profiles only.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "name": {
+      "description": "Profile name. Profiles only.",
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "parentalControl": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/ParentalControlConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Parental control settings."
+    },
+    "privacy": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PrivacyConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Privacy settings."
+    },
+    "security": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SecurityConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "Security settings."
+    },
+    "settings": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SettingsConfig"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "description": "General settings."
+    }
+  },
+  "title": "ndac profile or template",
+  "type": "object"
+}

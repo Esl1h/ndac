@@ -1,0 +1,109 @@
+---
+source: crates/ndac-core/tests/workspace.rs
+expression: p.to_toml()
+---
+key = "casa"
+id = "abc123"
+ignore = ["parentalControl.services"]
+
+[list_modes]
+allowlist = "merge"
+denylist = "authoritative"
+
+[auth]
+sources = ["cmd:pass show nextdns/work-api-key"]
+
+[desired]
+name = "Casa"
+
+[desired.security]
+threatIntelligenceFeeds = true
+typosquatting = true
+dga = true
+nrd = true
+
+[[desired.security.tlds]]
+id = "cn"
+
+[[desired.security.tlds]]
+id = "mov"
+
+[[desired.security.tlds]]
+id = "ru"
+
+[[desired.security.tlds]]
+id = "xyz"
+
+[[desired.security.tlds]]
+id = "zip"
+
+[desired.privacy]
+disguisedTrackers = true
+allowAffiliate = false
+
+[[desired.privacy.blocklists]]
+id = "hagezi-pro"
+
+[[desired.privacy.blocklists]]
+id = "nextdns-recommended"
+
+[[desired.privacy.blocklists]]
+id = "oisd"
+
+[[desired.privacy.natives]]
+id = "samsung"
+
+[[desired.privacy.natives]]
+id = "windows"
+
+[[desired.privacy.natives]]
+id = "xiaomi"
+
+[desired.parentalControl]
+safeSearch = true
+
+[[desired.parentalControl.services]]
+id = "tiktok"
+active = true
+
+[[desired.parentalControl.categories]]
+id = "gambling"
+active = true
+
+[[desired.parentalControl.categories]]
+id = "porn"
+active = true
+
+[[desired.denylist]]
+id = "adservice.google.com"
+active = true
+
+[[desired.denylist]]
+id = "doubleclick.net"
+active = true
+
+[[desired.denylist]]
+id = "foo.example"
+active = false
+
+[[desired.denylist]]
+id = "tiktokv.com"
+active = true
+
+[[desired.allowlist]]
+id = "s.youtube.com"
+active = true
+
+[desired.settings.logs]
+enabled = true
+retention = 7776000
+location = "eu"
+
+[desired.settings.logs.drop]
+ip = false
+domain = false
+
+[desired.settings.performance]
+ecs = true
+cacheBoost = false
+cnameFlattening = true

@@ -1,0 +1,31 @@
+---
+source: crates/ndac-core/tests/workspace.rs
+expression: out
+---
+ndac::config
+
+  × configuration has 2 error(s)
+
+Error: ndac::config::unknown_key
+
+  × unknown key `privacy.blocklist`
+   ╭─[profiles/p.toml:2:1]
+ 1 │ [privacy]
+ 2 │ blocklist = ["oisd"]
+   · ────┬────
+   ·     ╰── not valid here
+ 3 │ [parental_control]
+   ╰────
+  help: did you mean `blocklists`?
+
+Error: ndac::config::unknown_key
+
+  × unknown key `parental_control`
+   ╭─[profiles/p.toml:3:2]
+ 2 │ blocklist = ["oisd"]
+ 3 │ [parental_control]
+   ·  ────────┬───────
+   ·          ╰── not valid here
+ 4 │ safeSearch = true
+   ╰────
+  help: did you mean `parentalControl`?

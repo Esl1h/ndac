@@ -1,0 +1,132 @@
+---
+source: crates/ndac-core/tests/workspace.rs
+expression: p.to_json()
+---
+{
+  "format_version": 1,
+  "key": "casa",
+  "id": "abc123",
+  "list_modes": {
+    "allowlist": "merge",
+    "denylist": "authoritative"
+  },
+  "ignore": [
+    "parentalControl.services"
+  ],
+  "auth": {
+    "sources": [
+      "cmd:pass show nextdns/work-api-key"
+    ]
+  },
+  "desired": {
+    "name": "Casa",
+    "security": {
+      "threatIntelligenceFeeds": true,
+      "typosquatting": true,
+      "dga": true,
+      "nrd": true,
+      "tlds": [
+        {
+          "id": "cn"
+        },
+        {
+          "id": "mov"
+        },
+        {
+          "id": "ru"
+        },
+        {
+          "id": "xyz"
+        },
+        {
+          "id": "zip"
+        }
+      ]
+    },
+    "privacy": {
+      "blocklists": [
+        {
+          "id": "hagezi-pro"
+        },
+        {
+          "id": "nextdns-recommended"
+        },
+        {
+          "id": "oisd"
+        }
+      ],
+      "natives": [
+        {
+          "id": "samsung"
+        },
+        {
+          "id": "windows"
+        },
+        {
+          "id": "xiaomi"
+        }
+      ],
+      "disguisedTrackers": true,
+      "allowAffiliate": false
+    },
+    "parentalControl": {
+      "services": [
+        {
+          "id": "tiktok",
+          "active": true
+        }
+      ],
+      "categories": [
+        {
+          "id": "gambling",
+          "active": true
+        },
+        {
+          "id": "porn",
+          "active": true
+        }
+      ],
+      "safeSearch": true
+    },
+    "denylist": [
+      {
+        "id": "adservice.google.com",
+        "active": true
+      },
+      {
+        "id": "doubleclick.net",
+        "active": true
+      },
+      {
+        "id": "foo.example",
+        "active": false
+      },
+      {
+        "id": "tiktokv.com",
+        "active": true
+      }
+    ],
+    "allowlist": [
+      {
+        "id": "s.youtube.com",
+        "active": true
+      }
+    ],
+    "settings": {
+      "logs": {
+        "enabled": true,
+        "drop": {
+          "ip": false,
+          "domain": false
+        },
+        "retention": 7776000,
+        "location": "eu"
+      },
+      "performance": {
+        "ecs": true,
+        "cacheBoost": false,
+        "cnameFlattening": true
+      }
+    }
+  }
+}

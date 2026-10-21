@@ -13,7 +13,24 @@ keywords.workspace = true
 categories.workspace = true
 
 [dependencies]
+globset.workspace = true
+idna.workspace = true
+miette.workspace = true
 ndac-api.workspace = true
+schemars.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+strsim.workspace = true
+thiserror.workspace = true
+toml.workspace = true
+toml_edit.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+insta.workspace = true
+miette = { workspace = true, features = ["fancy-no-backtrace"] }
+proptest.workspace = true
+tempfile.workspace = true
 
 [lints]
 workspace = true

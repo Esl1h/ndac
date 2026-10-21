@@ -1,0 +1,50 @@
+---
+source: crates/ndac-core/tests/workspace.rs
+expression: out
+---
+ndac::config
+
+  × configuration has 4 error(s)
+
+Error: ndac::config::invalid
+
+  × `$inherit` without `extends`
+   ╭─[profiles/q.toml:2:12]
+ 1 │ [privacy]
+ 2 │ natives = ["$inherit"]
+   ·            ─────┬────
+   ·                 ╰── nothing to inherit
+   ╰────
+  help: add `extends = ["<template>"]` or remove `$inherit`
+
+Error: ndac::config::invalid
+
+  × `id` is not allowed in a template
+   ╭─[templates/base.toml:1:1]
+ 1 │ id = "abc"
+   · ─┬
+   ·  ╰── profiles only
+ 2 │ [denylist]
+   ╰────
+  help: `id`, `name`, `ignore`, `auth` and list `mode` are not inherited
+
+Error: ndac::config::invalid
+
+  × `denylist.mode` is not allowed in a template
+   ╭─[templates/base.toml:3:1]
+ 2 │ [denylist]
+ 3 │ mode = "merge"
+   · ──┬─
+   ·   ╰── profiles only
+   ╰────
+
+Error: ndac::config::invalid
+
+  × unknown template `bse`
+   ╭─[profiles/p.toml:1:12]
+ 1 │ extends = ["bse"]
+   ·            ──┬──
+   ·              ╰── not found
+ 2 │ [privacy]
+   ╰────
+  help: did you mean `base`?

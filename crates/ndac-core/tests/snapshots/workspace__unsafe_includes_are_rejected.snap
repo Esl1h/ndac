@@ -1,0 +1,15 @@
+---
+source: crates/ndac-core/tests/workspace.rs
+expression: out
+---
+ndac::config
+
+  × configuration has 2 error(s)
+
+Error: ndac::config::include
+
+  × include pattern `../outside/*.toml`: `..` is not allowed
+
+Error: ndac::config::include
+
+  × include pattern `/etc/*.toml`: must be relative to the directory of ndac.toml

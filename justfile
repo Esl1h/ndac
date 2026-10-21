@@ -1,5 +1,5 @@
 # Developer tasks. Run `just --list` for a summary.
-# Recipes for schema, fuzz, e2e and release-dry are added in the phases that
+# Recipes for fuzz, e2e and release-dry are added in the phases that
 # introduce those features.
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
@@ -33,6 +33,10 @@ cov:
 docs:
     RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --workspace --all-features
     mdbook build docs
+
+# Regenerate the JSON Schemas under schema/
+schema:
+    UPDATE_SCHEMA=1 cargo test -p ndac-core --lib schema_files_are_up_to_date
 
 # Lint GitHub Actions workflows
 lint-actions:

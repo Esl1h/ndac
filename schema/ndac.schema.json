@@ -1,0 +1,237 @@
+{
+  "$defs": {
+    "AuthConfig": {
+      "additionalProperties": false,
+      "description": "`[auth]`.",
+      "properties": {
+        "allow_insecure_permissions": {
+          "description": "Downgrade insecure file permissions from an error to a warning.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "api_key": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/SecretValue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Literal API key. Prefer `ndac.local.toml` or another source."
+        },
+        "cmd_timeout": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DurationValue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Timeout for `cmd:` sources, e.g. `\"30s\"`."
+        },
+        "on_source_error": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/OnSourceError"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "What to do when a source exists but fails."
+        },
+        "quiet_literal": {
+          "description": "Silence the warning printed when a literal key is used.",
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "sources": {
+          "description": "Ordered key sources, e.g. `[\"env:NEXTDNS_API_KEY\", \"keyring:nextdns/default\"]`.",
+          "items": {
+            "type": "string"
+          },
+          "type": [
+            "array",
+            "null"
+          ]
+        }
+      },
+      "type": "object"
+    },
+    "ColorChoice": {
+      "description": "Color mode.",
+      "oneOf": [
+        {
+          "const": "auto",
+          "description": "Color when writing to a terminal and `NO_COLOR` is unset.",
+          "type": "string"
+        },
+        {
+          "const": "always",
+          "description": "Always color.",
+          "type": "string"
+        },
+        {
+          "const": "never",
+          "description": "Never color.",
+          "type": "string"
+        }
+      ]
+    },
+    "DurationValue": {
+      "anyOf": [
+        {
+          "description": "Seconds.",
+          "format": "uint64",
+          "minimum": 0,
+          "type": "integer"
+        },
+        {
+          "description": "Units `s`, `m`, `h`, `d`, `w`, `y` (365 days), combinable.",
+          "type": "string"
+        }
+      ],
+      "description": "A duration: integer seconds or a string such as `\"90d\"` or `\"1h30m\"`."
+    },
+    "OnSourceError": {
+      "description": "Behavior when an auth source exists but fails.",
+      "oneOf": [
+        {
+          "const": "fail",
+          "description": "Abort (default).",
+          "type": "string"
+        },
+        {
+          "const": "skip",
+          "description": "Try the next source.",
+          "type": "string"
+        }
+      ]
+    },
+    "OutputConfig": {
+      "additionalProperties": false,
+      "description": "`[output]`.",
+      "properties": {
+        "color": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/ColorChoice"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Colored output."
+        }
+      },
+      "type": "object"
+    },
+    "ProviderConfig": {
+      "additionalProperties": false,
+      "description": "`[provider]`.",
+      "properties": {
+        "api_url": {
+          "description": "API base URL. Only meant for tests.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "concurrency": {
+          "description": "Maximum requests in flight.",
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "retries": {
+          "description": "Retries after a failed request.",
+          "format": "uint32",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "snapshot_dir": {
+          "description": "Directory for snapshots, relative to the root directory.",
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "snapshot_keep": {
+          "description": "Snapshots kept per profile.",
+          "format": "uint",
+          "minimum": 0,
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "timeout": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/DurationValue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "description": "Per-request timeout, e.g. `\"15s\"`."
+        }
+      },
+      "type": "object"
+    },
+    "SecretValue": {
+      "description": "A secret string. Serializes and prints as `<redacted>`.",
+      "type": "string"
+    }
+  },
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "description": "Root file, `ndac.toml`.",
+  "properties": {
+    "auth": {
+      "$ref": "#/$defs/AuthConfig",
+      "default": {},
+      "description": "API key resolution."
+    },
+    "include": {
+      "description": "Globs, relative to the root directory, of template and profile files.\nFiles under `templates/` are templates; all others are profiles.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    },
+    "output": {
+      "$ref": "#/$defs/OutputConfig",
+      "default": {},
+      "description": "Terminal output."
+    },
+    "provider": {
+      "$ref": "#/$defs/ProviderConfig",
+      "default": {},
+      "description": "API client settings."
+    },
+    "schema": {
+      "description": "Configuration format version. Only `1` exists.",
+      "format": "uint32",
+      "minimum": 0,
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "title": "ndac root configuration (ndac.toml)",
+  "type": "object"
+}

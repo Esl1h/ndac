@@ -1,0 +1,26 @@
+---
+source: crates/ndac-core/tests/workspace.rs
+expression: out
+---
+ndac::config
+
+  × configuration has 2 error(s)
+
+Error: ndac::config::syntax
+
+  × invalid type: string "yes", expected a boolean
+   ╭─[profiles/p.toml:2:7]
+ 1 │ [security]
+ 2 │ nrd = "yes"
+   ·       ──┬──
+   ·         ╰── here
+   ╰────
+
+Error: ndac::config::syntax
+
+  × unclosed table, expected `]`
+   ╭─[profiles/q.toml:1:10]
+ 1 │ [security
+   ·          ▲
+   ·          ╰── here
+   ╰────
