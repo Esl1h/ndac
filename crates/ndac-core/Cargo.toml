@@ -42,6 +42,8 @@ nix = { workspace = true, features = ["user"] }
 
 [dev-dependencies]
 insta.workspace = true
+ndac-testkit.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 miette = { workspace = true, features = ["fancy-no-backtrace"] }
 proptest.workspace = true
 tempfile.workspace = true
