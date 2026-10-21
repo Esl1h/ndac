@@ -70,6 +70,16 @@ impl SourceFile {
         self.locate(path, false)
     }
 
+    /// 1-based line of the key at a dotted field path such as
+    /// `settings.logs.retention`, or of the closest enclosing table this file
+    /// sets; `None` when the file sets none of it.
+    #[must_use]
+    pub fn line_of(&self, path: &str) -> Option<usize> {
+        let segs: Vec<Seg<'_>> = path.split('.').map(Seg::Key).collect();
+        let start = self.key_span(&segs)?.start;
+        Some(self.text.get(..start)?.matches('\n').count() + 1)
+    }
+
     fn locate(&self, path: &[Seg<'_>], want_key: bool) -> Option<Range<usize>> {
         let mut best = None;
         let mut item = self.doc.as_item();
@@ -77,10 +87,13 @@ impl SourceFile {
             let last = i + 1 == path.len();
             match *seg {
                 Seg::Key(k) => {
-                    let (key, next) = match item {
-                        Item::Table(t) => t.get_key_value(k)?,
-                        Item::Value(Value::InlineTable(t)) => t.get_key_value(k)?,
-                        _ => return best,
+                    let found = match item {
+                        Item::Table(t) => t.get_key_value(k),
+                        Item::Value(Value::InlineTable(t)) => t.get_key_value(k),
+                        _ => None,
+                    };
+                    let Some((key, next)) = found else {
+                        return best;
                     };
                     best = key.span().or(best);
                     if last && want_key {
@@ -158,6 +171,18 @@ mod tests {
             ])
             .unwrap();
         assert_eq!(&text[k], "tiktok");
+    }
+
+    #[test]
+    fn line_of_field_paths() {
+        let s = src(
+            "name = \"x\"\n\n[settings.logs]\nretention = \"90d\"\n[denylist]\nmode = \"merge\"\n",
+        );
+        assert_eq!(s.line_of("name"), Some(1));
+        assert_eq!(s.line_of("settings.logs.retention"), Some(4));
+        assert_eq!(s.line_of("settings.logs.enabled"), Some(3));
+        assert_eq!(s.line_of("denylist"), Some(5));
+        assert_eq!(s.line_of("privacy.blocklists"), None);
     }
 
     #[test]

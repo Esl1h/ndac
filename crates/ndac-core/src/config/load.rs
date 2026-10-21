@@ -54,6 +54,16 @@ pub fn discover(explicit: Option<&Path>, cwd: &Path) -> Result<PathBuf, ConfigEr
     })
 }
 
+/// Merges `layers` in order onto an empty file.
+#[must_use]
+pub fn fold_layers(layers: &[&Entry]) -> ProfileFile {
+    layers.iter().fold(ProfileFile::default(), |acc, e| {
+        let mut own = e.file.clone();
+        prenormalize(&mut own);
+        merge(acc, own)
+    })
+}
+
 /// A template or profile file.
 #[derive(Debug)]
 pub struct Entry {
@@ -268,11 +278,34 @@ impl Workspace {
             &mut layers,
             &mut Vec::new(),
         )?;
-        let mut own = entry.file.clone();
-        prenormalize(&mut own);
-        layers.push(own);
-        let resolved = layers.into_iter().fold(ProfileFile::default(), merge);
-        Ok(desired(key, resolved, entry.src.path.clone()))
+        layers.push(entry);
+        Ok(desired(key, fold_layers(&layers), entry.src.path.clone()))
+    }
+
+    /// The files a profile is built from, in the order they are applied:
+    /// templates (each one's own `extends` first), then the profile.
+    ///
+    /// # Errors
+    ///
+    /// Unknown profile or an `extends` cycle.
+    pub fn layer_entries(&self, key: &str) -> Result<Vec<&Entry>, ConfigErrors> {
+        let entry = self.profiles.get(key).ok_or_else(|| {
+            ConfigErrors::from(self.root_src.invalid(
+                None,
+                format!("unknown profile `{key}`"),
+                "",
+                None,
+            ))
+        })?;
+        let mut layers = Vec::new();
+        self.layers(
+            &entry.src,
+            &entry.file.extends,
+            &mut layers,
+            &mut Vec::new(),
+        )?;
+        layers.push(entry);
+        Ok(layers)
     }
 
     /// Resolves every profile, in key order.
@@ -300,11 +333,11 @@ impl Workspace {
     /// `extends`, then the template itself. Layers are applied in order, so a
     /// `$inherit` or `$remove` in a template refers to everything stacked
     /// before it.
-    fn layers(
-        &self,
+    fn layers<'s>(
+        &'s self,
         from: &SourceFile,
         extends: &[String],
-        out: &mut Vec<ProfileFile>,
+        out: &mut Vec<&'s Entry>,
         stack: &mut Vec<String>,
     ) -> Result<(), ConfigError> {
         for (i, name) in extends.iter().enumerate() {
@@ -325,9 +358,7 @@ impl Workspace {
             stack.push(name.clone());
             self.layers(&t.src, &t.file.extends, out, stack)?;
             stack.pop();
-            let mut own = t.file.clone();
-            prenormalize(&mut own);
-            out.push(own);
+            out.push(t);
         }
         Ok(())
     }

@@ -20,7 +20,8 @@ pub use desired::{DesiredProfile, RENDER_FORMAT_VERSION};
 pub use error::{ConfigError, ConfigErrors};
 pub use fmt::format_toml;
 pub use load::{
-    Entry, LOCAL_FILE, ROOT_FILE, TEMPLATES_DIR, Workspace, config_files, discover, include_files,
+    Entry, LOCAL_FILE, ROOT_FILE, TEMPLATES_DIR, Workspace, config_files, discover, fold_layers,
+    include_files,
 };
 pub use merge::{ids as merge_ids, items as merge_items, merge};
 pub use schema::{SchemaKind, json_schema, json_schema_text};
