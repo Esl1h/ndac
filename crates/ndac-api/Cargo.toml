@@ -12,5 +12,22 @@ authors.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+[dependencies]
+fastrand.workspace = true
+httpdate.workspace = true
+reqwest.workspace = true
+rustls.workspace = true
+secrecy.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio = { workspace = true, features = ["sync", "time"] }
+tracing.workspace = true
+url.workspace = true
+
+[dev-dependencies]
+ndac-testkit.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
+
 [lints]
 workspace = true
