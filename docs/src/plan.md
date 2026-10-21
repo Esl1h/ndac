@@ -36,8 +36,9 @@ live profile. `plan` compares each change against it:
 - **drift**: the live profile changed (for example in the dashboard);
 - **conflict**: both changed the same field or item.
 
-Without a snapshot every change is pending. `ndac reconcile` resolves drift
-interactively.
+Without a snapshot every change is pending. `ndac drift` reports drift for
+scheduled checks, and `ndac reconcile` resolves it; see
+[Drift and reconcile](drift.md).
 
 ## Options
 

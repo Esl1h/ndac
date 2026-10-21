@@ -70,6 +70,18 @@ patterns.
   repository can still apply concurrently.
 - `ndac init` does not write a CI workflow yet; the GitHub Actions example
   is added with the documentation phase.
+- After a partial apply (`--target`, or `reconcile` overwriting only some
+  items), the `post-apply` snapshot records the whole live profile. Drift
+  left untouched then shows as pending instead of drift, until the next full
+  apply or import.
+
+## Reconcile
+
+- Interactive prompts are not covered by automated tests; the
+  non-interactive paths are.
+- Importing a field that NextDNS no longer returns removes it from the
+  profile. If a template sets it, the import fails with a message instead,
+  because a profile cannot unset an inherited field.
 
 ## Fake API
 
