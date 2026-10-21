@@ -1,22 +1,22 @@
 //! `ndac`: NextDNS-as-Code, NextDNS profiles managed from TOML files.
 
-// Not `forbid`: the Linux `prctl(PR_SET_DUMPABLE)` hardening call will live in
-// a single module of this crate with a scoped `allow`.
-#![deny(unsafe_code)]
+#![forbid(unsafe_code)]
 
-use std::{io, process::ExitCode};
+use std::process::ExitCode;
 
 use clap::Parser;
 use tracing_subscriber::{EnvFilter, fmt};
 
 mod cli;
 mod commands;
+mod hardening;
 mod output;
 
-use cli::{Cli, Command, GlobalArgs, LogFormat};
-use output::{Exit, Output};
+use cli::{AuthCommand, Cli, Command, GlobalArgs, LogFormat};
+use output::{Exit, Output, RedactingStderr};
 
 fn main() -> ExitCode {
+    hardening::apply();
     let cli = match Cli::try_parse() {
         Ok(c) => c,
         Err(e) => {
@@ -41,12 +41,24 @@ fn main() -> ExitCode {
         Command::Render { profile, format } => commands::render::run(config, &profile, format),
         Command::Fmt { check } => commands::fmt::run(config, check, out),
         Command::Schema { kind } => commands::schema::run(kind),
+        Command::Auth(AuthCommand::Check { profile }) => {
+            commands::auth::check(&cli.global, profile.as_deref())
+        }
+        Command::Auth(AuthCommand::Sources { profile }) => {
+            commands::auth::sources(&cli.global, profile.as_deref())
+        }
+        Command::Auth(AuthCommand::Set {
+            backend,
+            keyring,
+            path,
+        }) => commands::auth::set(&cli.global, backend, &keyring, path.as_deref(), out),
     };
     match result {
         Ok(code) => code.into(),
         Err(failure) => {
             let code = failure.exit();
-            eprintln!("{:?}", failure.report());
+            let text = format!("{:?}", failure.report());
+            eprintln!("{}", ndac_core::auth::redact(&text));
             code.into()
         }
     }
@@ -65,7 +77,7 @@ fn init_logging(global: &GlobalArgs, color: bool) {
             "warn,ndac={level},ndac_core={level},ndac_api={level}"
         ))
     });
-    let builder = fmt().with_env_filter(filter).with_writer(io::stderr);
+    let builder = fmt().with_env_filter(filter).with_writer(RedactingStderr);
     match global.log_format {
         LogFormat::Text => builder.with_ansi(color).without_time().init(),
         LogFormat::Json => builder.json().init(),

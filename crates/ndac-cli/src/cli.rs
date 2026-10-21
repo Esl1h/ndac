@@ -23,8 +23,30 @@ pub(crate) struct Cli {
 pub(crate) struct GlobalArgs {
     /// Path to ndac.toml. Default: the nearest one in this or a parent
     /// directory.
-    #[arg(long, global = true, env = "NDAC_CONFIG", value_name = "PATH")]
+    #[arg(
+        long,
+        global = true,
+        env = "NDAC_CONFIG",
+        hide_env_values = true,
+        value_name = "PATH"
+    )]
     pub(crate) config: Option<PathBuf>,
+
+    /// API key source reference(s), e.g. `keyring:nextdns/default`, tried in
+    /// order. Overrides `[auth].sources`. Never a key value.
+    #[arg(
+        long,
+        global = true,
+        env = "NDAC_AUTH_SOURCE",
+        hide_env_values = true,
+        value_name = "REF",
+        value_delimiter = ','
+    )]
+    pub(crate) auth_source: Vec<String>,
+
+    /// Use a literal key from a file that git tracks, for this run only.
+    #[arg(long, global = true)]
+    pub(crate) allow_tracked_secret: bool,
 
     /// More logging on stderr (-v info, -vv debug, -vvv trace).
     #[arg(short, long, global = true, action = clap::ArgAction::Count)]
@@ -80,6 +102,10 @@ pub(crate) enum Command {
         check: bool,
     },
 
+    /// Inspect and store the NextDNS API key.
+    #[command(subcommand)]
+    Auth(AuthCommand),
+
     /// Print the JSON Schema of a configuration file kind.
     Schema {
         /// Which file the schema describes.
@@ -102,4 +128,45 @@ pub(crate) enum SchemaArg {
     Local,
     /// Profile and template files.
     Profile,
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum AuthCommand {
+    /// Resolve the key and verify it against the API. Never prints the key.
+    Check {
+        /// Use this profile's `[auth]` instead of the root configuration.
+        #[arg(long)]
+        profile: Option<String>,
+    },
+
+    /// Show the source chain and which source resolves. May run `cmd:`
+    /// sources, which can prompt.
+    Sources {
+        /// Use this profile's `[auth]` instead of the root configuration.
+        #[arg(long)]
+        profile: Option<String>,
+    },
+
+    /// Store a key, read from a hidden prompt or from stdin.
+    Set {
+        /// Where to store the key.
+        #[arg(long, value_enum)]
+        backend: Backend,
+        /// Keyring entry as SERVICE/USER (keyring backend).
+        #[arg(long, default_value = "nextdns/default", value_name = "SERVICE/USER")]
+        keyring: String,
+        /// Destination file (file backend).
+        #[arg(long, value_name = "PATH", required_if_eq("backend", "file"))]
+        path: Option<PathBuf>,
+    },
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub(crate) enum Backend {
+    /// OS keyring (Secret Service, macOS Keychain).
+    Keyring,
+    /// `api_key` in ndac.local.toml (mode 0600, git-ignored).
+    Config,
+    /// A file with mode 0600, for `file:` or `systemd-cred:` sources.
+    File,
 }

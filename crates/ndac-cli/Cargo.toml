@@ -16,17 +16,29 @@ categories.workspace = true
 name = "ndac"
 path = "src/main.rs"
 
+[features]
+default = ["keyring"]
+keyring = ["ndac-core/keyring"]
+age = ["ndac-core/age"]
+
 [dependencies]
 clap.workspace = true
 miette = { workspace = true, features = ["fancy-no-backtrace"] }
-ndac-core.workspace = true
+ndac-api.workspace = true
+ndac-core = { workspace = true, default-features = false }
+rpassword.workspace = true
+tokio = { workspace = true, features = ["rt", "time"] }
 tracing.workspace = true
 tracing-subscriber.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+nix = { workspace = true, features = ["process"] }
 
 [dev-dependencies]
 assert_cmd.workspace = true
 ndac-testkit.workspace = true
 predicates.workspace = true
+tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 serde_json.workspace = true
 tempfile.workspace = true
 

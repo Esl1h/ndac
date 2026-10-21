@@ -7,7 +7,35 @@ use std::{
     process::ExitCode,
 };
 
+use ndac_core::auth::redact;
+use tracing_subscriber::fmt::MakeWriter;
+
 use crate::cli::ColorArg;
+
+/// stderr writer for logs that masks every resolved key (defense in depth:
+/// keys are never logged on purpose).
+#[derive(Debug, Clone, Copy, Default)]
+pub(crate) struct RedactingStderr;
+
+impl Write for RedactingStderr {
+    fn write(&mut self, buf: &[u8]) -> io::Result<usize> {
+        let text = String::from_utf8_lossy(buf);
+        io::stderr().lock().write_all(redact(&text).as_bytes())?;
+        Ok(buf.len())
+    }
+
+    fn flush(&mut self) -> io::Result<()> {
+        io::stderr().flush()
+    }
+}
+
+impl<'a> MakeWriter<'a> for RedactingStderr {
+    type Writer = Self;
+
+    fn make_writer(&'a self) -> Self::Writer {
+        *self
+    }
+}
 
 /// Exit codes shared by every command.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -18,10 +46,8 @@ pub(crate) enum Exit {
     /// Changes or drift pending (`plan --detailed-exitcode`, `drift`).
     #[allow(dead_code, reason = "used from Phase 4 on")]
     Changes = 2,
-    #[allow(dead_code, reason = "used from Phase 3 on")]
     Auth = 3,
     Config = 4,
-    #[allow(dead_code, reason = "used from Phase 4 on")]
     Api = 5,
 }
 
@@ -54,6 +80,16 @@ impl Output {
             Err(e) if e.kind() == io::ErrorKind::BrokenPipe => Ok(()),
             other => other,
         }
+    }
+
+    /// A line of the requested result on stdout.
+    pub(crate) fn line(text: &str) -> io::Result<()> {
+        Self::artifact(&format!("{text}\n"))
+    }
+
+    /// A warning on stderr; shown even with `--quiet`.
+    pub(crate) fn warn(text: &str) {
+        let _ = writeln!(io::stderr().lock(), "warning: {}", redact(text));
     }
 
     /// A status line on stderr, suppressed by `--quiet`.
