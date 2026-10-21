@@ -12,8 +12,11 @@ use crate::output::Exit;
 
 pub(crate) mod auth;
 pub(crate) mod fmt;
+pub(crate) mod plan;
 pub(crate) mod render;
 pub(crate) mod schema;
+pub(crate) mod session;
+pub(crate) mod snapshot;
 pub(crate) mod validate;
 
 /// Why a command failed, and the exit code to use.

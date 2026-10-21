@@ -12,7 +12,7 @@ mod commands;
 mod hardening;
 mod output;
 
-use cli::{AuthCommand, Cli, Command, GlobalArgs, LogFormat};
+use cli::{AuthCommand, Cli, Command, GlobalArgs, LogFormat, SnapshotCommand};
 use output::{Exit, Output, RedactingStderr};
 
 fn main() -> ExitCode {
@@ -41,6 +41,20 @@ fn main() -> ExitCode {
         Command::Render { profile, format } => commands::render::run(config, &profile, format),
         Command::Fmt { check } => commands::fmt::run(config, check, out),
         Command::Schema { kind } => commands::schema::run(kind),
+        Command::Plan {
+            targets,
+            detailed_exitcode,
+            format,
+        } => commands::plan::run(&cli.global, &targets, detailed_exitcode, format, out),
+        Command::Snapshot(SnapshotCommand::List { profile }) => {
+            commands::snapshot::list(config, profile.as_deref())
+        }
+        Command::Snapshot(SnapshotCommand::Show { id, profile }) => {
+            commands::snapshot::show(config, &id, profile.as_deref())
+        }
+        Command::Snapshot(SnapshotCommand::Diff { a, b, profile }) => {
+            commands::snapshot::diff(config, &a, &b, profile.as_deref(), out)
+        }
         Command::Auth(AuthCommand::Check { profile }) => {
             commands::auth::check(&cli.global, profile.as_deref())
         }

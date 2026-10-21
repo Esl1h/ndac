@@ -102,6 +102,24 @@ pub(crate) enum Command {
         check: bool,
     },
 
+    /// Show what apply would change, and drift since the last apply.
+    Plan {
+        /// Limit to profiles or paths: `casa`, `casa.denylist`,
+        /// `*.privacy.blocklists`. Repeatable.
+        #[arg(long = "target", value_name = "PATH")]
+        targets: Vec<String>,
+        /// Exit with 2 when there are changes (0 when none).
+        #[arg(long)]
+        detailed_exitcode: bool,
+        /// Output format.
+        #[arg(long, value_enum, default_value_t = PlanFormat::Text)]
+        format: PlanFormat,
+    },
+
+    /// Inspect local snapshots.
+    #[command(subcommand)]
+    Snapshot(SnapshotCommand),
+
     /// Inspect and store the NextDNS API key.
     #[command(subcommand)]
     Auth(AuthCommand),
@@ -169,4 +187,39 @@ pub(crate) enum Backend {
     Config,
     /// A file with mode 0600, for `file:` or `systemd-cred:` sources.
     File,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, ValueEnum)]
+pub(crate) enum PlanFormat {
+    Text,
+    Json,
+    Markdown,
+}
+
+#[derive(Debug, Subcommand)]
+pub(crate) enum SnapshotCommand {
+    /// List snapshots, oldest first.
+    List {
+        /// Only this profile.
+        #[arg(long)]
+        profile: Option<String>,
+    },
+    /// Print a snapshot as JSON.
+    Show {
+        /// Snapshot ID or a unique prefix.
+        id: String,
+        /// Look only in this profile.
+        #[arg(long)]
+        profile: Option<String>,
+    },
+    /// Show the changes from snapshot A to snapshot B.
+    Diff {
+        /// Older snapshot.
+        a: String,
+        /// Newer snapshot.
+        b: String,
+        /// Look only in this profile.
+        #[arg(long)]
+        profile: Option<String>,
+    },
 }

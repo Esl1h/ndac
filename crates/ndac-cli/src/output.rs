@@ -61,7 +61,10 @@ impl From<Exit> for ExitCode {
 #[derive(Debug, Clone, Copy)]
 pub(crate) struct Output {
     pub(crate) quiet: bool,
+    /// Color on stderr.
     pub(crate) color: bool,
+    /// Color in artifacts written to stdout (plan text).
+    pub(crate) stdout_color: bool,
 }
 
 impl Output {
@@ -69,6 +72,7 @@ impl Output {
         Self {
             quiet,
             color: use_color(color, io::stderr().is_terminal()),
+            stdout_color: use_color(color, io::stdout().is_terminal()),
         }
     }
 
