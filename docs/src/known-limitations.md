@@ -83,6 +83,24 @@ patterns.
   profile. If a template sets it, the import fails with a message instead,
   because a profile cannot unset an inherited field.
 
+## Endpoints and doctor
+
+- The IPv4 anycast addresses (`45.90.28.0`, `45.90.30.0`), the DNS-over-TLS
+  hostname format and the DNS-over-HTTPS URL format come from the NextDNS
+  setup instructions, not from the API. IPv6 addresses are left out of the
+  `resolved` and `networkmanager` output because they are specific to each
+  profile and not available from the documented API.
+- The `nextdns.conf` format and option names (`profile`, `cache-size`,
+  `report-client-info`) were checked against the `nextdns` client source.
+- The minimum NetworkManager version that accepts `IP#server-name` in
+  `ipv4.dns` was not confirmed.
+- `test.nextdns.io` is not documented. Its fields (`status`, `protocol`,
+  `profile`, `client`, `srcIP`, `destIP`, `anycast`, `server`,
+  `clientName`) were checked against live responses only. Only `status =
+  "ok"` was observed; any other value is treated as "queries do not reach
+  NextDNS". The bare host answers some clients with a script page instead of
+  JSON, so `doctor` queries a random subdomain directly.
+
 ## Fake API
 
 `ndac-testkit` follows the documented semantics. Where the documentation is

@@ -49,8 +49,10 @@ mode = "authoritative"
 
 Fields left out are not managed: `ndac` never changes them.
 
-`id`, `name`, `ignore`, `auth` and list `mode` are profile-only; a template
-that sets them is rejected.
+`id`, `name`, `ignore`, `auth`, `endpoint` and list `mode` are
+profile-only; a template that sets them is rejected. `[endpoint]` is never
+sent to NextDNS; it only feeds `ndac endpoint render` (see
+[Endpoints and doctor](endpoint.md)).
 
 ## How `extends` merges
 
@@ -70,7 +72,8 @@ Each layer merges onto the result of the layers before it:
 - **Item maps** (`denylist.items`, `allowlist.items`,
   `parentalControl.services`, `parentalControl.categories`) merge by key. The
   value `"$remove"` deletes an inherited key.
-- **`id`, `name`, `ignore`, `auth` and list `mode`** are never inherited.
+- **`id`, `name`, `ignore`, `auth`, `endpoint` and list `mode`** are never
+  inherited.
 
 Because templates are layers, a template can use `"$inherit"` or
 `"$remove"` against whatever is stacked before it. With
