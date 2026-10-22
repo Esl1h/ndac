@@ -23,6 +23,8 @@ patterns.
   only array child endpoints (for example `/denylist`) are paginated.
 - `PUT` on an array endpoint is assumed to take the full JSON array as body,
   and `POST` a single item object.
+- Rewrites and setup information (feature `unstable-endpoints`) are not
+  documented at all; see [Undocumented endpoints](unstable.md).
 
 ## Responses
 
@@ -95,7 +97,8 @@ patterns.
   hostname format and the DNS-over-HTTPS URL format come from the NextDNS
   setup instructions, not from the API. IPv6 addresses are left out of the
   `resolved` and `networkmanager` output because they are specific to each
-  profile and not available from the documented API.
+  profile and not available from the documented API, unless `--api-ipv6`
+  reads them from the undocumented setup endpoint.
 - The `nextdns.conf` format and option names (`profile`, `cache-size`,
   `report-client-info`) were checked against the `nextdns` client source.
 - The minimum NetworkManager version that accepts `IP#server-name` in

@@ -38,7 +38,9 @@ it yourself. The profile needs an `id`, so apply new profiles first.
   on.
 - **`resolved`**: a systemd-resolved drop-in using DNS over TLS, with the
   NextDNS IPv4 anycast addresses `45.90.28.0` and `45.90.30.0` and the
-  profile hostname as TLS server name.
+  profile hostname as TLS server name. The profile's IPv6 addresses are
+  only added with `--api-ipv6`, in builds with the `unstable-endpoints`
+  feature (see [Undocumented endpoints](unstable.md)).
 - **`networkmanager`**: a POSIX shell script with `nmcli` commands that set
   the same servers on one connection (`CONNECTION=... sh script.sh`). DNS over
   TLS in NetworkManager requires systemd-resolved as its DNS backend.

@@ -9,6 +9,7 @@
 - [Drift and reconcile](drift.md)
 - [Apply, import and rollback](apply.md)
 - [Endpoints and doctor](endpoint.md)
+- [Undocumented endpoints](unstable.md)
 - [Shell completions and man page](completions.md)
 - [CI recipes](ci.md)
 - [FAQ and troubleshooting](faq.md)
