@@ -41,6 +41,10 @@ patterns.
   rendered sorted by ID.
 - Domains are validated locally (lowercase punycode, at least two labels, no
   wildcards). NextDNS may accept or reject a slightly different set.
+- It is not documented whether the API returns domains and TLDs exactly as
+  stored. Live entries are matched by their normalized form, so `Example.COM`
+  in the live profile is the same item as `example.com` in configuration;
+  removals and updates use the ID as the API returned it.
 - Blocklist, native, service and category IDs are not checked against a
   catalog: the catalog endpoints are not documented.
 - There are two JSON Schemas (root file and profile/template files) instead

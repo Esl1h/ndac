@@ -16,6 +16,7 @@ pub mod types;
 mod values;
 
 pub use check::INHERIT;
+pub(crate) use desired::normalize_tld;
 pub use desired::{DesiredProfile, RENDER_FORMAT_VERSION};
 pub use error::{ConfigError, ConfigErrors};
 pub use fmt::format_toml;

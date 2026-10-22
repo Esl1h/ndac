@@ -104,6 +104,39 @@ fn detects_fields_items_and_respects_modes() {
 }
 
 #[test]
+fn live_domains_match_by_normalized_form() {
+    let d = desired(
+        "k",
+        "[security]\ntlds = [\"ru\"]\n[denylist]\nmode = \"authoritative\"\n[denylist.items]\n\"a.example\" = true\n\"xn--bcher-kva.example\" = false\n",
+    );
+    let l = live(
+        &json!({ "security": { "tlds": [{ "id": "RU" }] }, "denylist": [
+            { "id": "A.Example", "active": true },
+            { "id": "bücher.example", "active": true },
+            { "id": "Gone.Example", "active": true }
+        ]}),
+    );
+    assert_eq!(
+        diff(&d, Some(&l)).changes,
+        vec![
+            // API calls use the IDs as the live profile has them.
+            Change::SetItemActive {
+                list: "denylist".into(),
+                id: "bücher.example".into(),
+                from: true,
+                to: false,
+                origin: Origin::Pending,
+            },
+            Change::RemoveItem {
+                list: "denylist".into(),
+                id: "Gone.Example".into(),
+                origin: Origin::Pending,
+            },
+        ]
+    );
+}
+
+#[test]
 fn new_profile_is_a_create_with_every_desired_item() {
     let d = desired(
         "novo",

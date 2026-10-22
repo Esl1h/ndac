@@ -97,9 +97,15 @@ pub(crate) fn prenormalize(f: &mut ProfileFile) {
     }
     if let Some(tlds) = f.security.as_mut().and_then(|s| s.tlds.as_mut()) {
         for t in tlds.iter_mut() {
-            *t = t.trim().trim_start_matches('.').to_lowercase();
+            *t = normalize_tld(t);
         }
     }
+}
+
+/// The form a TLD takes in configuration: no surrounding space or leading
+/// dot, lowercase.
+pub(crate) fn normalize_tld(t: &str) -> String {
+    t.trim().trim_start_matches('.').to_lowercase()
 }
 
 /// Builds the canonical profile from a resolved (merged) file.

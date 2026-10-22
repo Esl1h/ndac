@@ -22,7 +22,7 @@ pub use render::{
 pub use target::Target;
 
 use crate::{
-    config::{DesiredProfile, ListMode},
+    config::{DesiredProfile, ListMode, normalize_domain, normalize_tld},
     paths::{FIELD_PATHS, covers},
 };
 
@@ -342,21 +342,33 @@ fn list_changes(
 ) {
     let want = items(Some(target), has_active);
     let have = items(current, has_active);
+    // Configured domains and TLDs are normalized (lowercase, punycode);
+    // match live entries in another form by their normalized ID, but keep
+    // the live ID for the API calls that address them.
+    let canonical = |id: &str| match path {
+        "denylist" | "allowlist" => normalize_domain(id).unwrap_or_else(|_| id.to_owned()),
+        "security.tlds" => normalize_tld(id),
+        _ => id.to_owned(),
+    };
+    let live_by_canonical: BTreeMap<String, (&String, &Option<bool>)> = have
+        .iter()
+        .map(|(id, active)| (canonical(id), (id, active)))
+        .collect();
     for (id, active) in &want {
-        match have.get(id) {
+        match live_by_canonical.get(id) {
             None => out.push(Change::AddItem {
                 list: path.to_owned(),
                 id: id.clone(),
                 active: *active,
                 origin: Origin::Pending,
             }),
-            Some(live_active) => {
+            Some((live_id, live_active)) => {
                 if let (Some(from), Some(to)) = (live_active, active)
                     && from != to
                 {
                     out.push(Change::SetItemActive {
                         list: path.to_owned(),
-                        id: id.clone(),
+                        id: (*live_id).clone(),
                         from: *from,
                         to: *to,
                         origin: Origin::Pending,
@@ -366,7 +378,7 @@ fn list_changes(
         }
     }
     if authoritative {
-        for id in have.keys().filter(|id| !want.contains_key(*id)) {
+        for id in have.keys().filter(|id| !want.contains_key(&canonical(id))) {
             out.push(Change::RemoveItem {
                 list: path.to_owned(),
                 id: id.clone(),
