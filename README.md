@@ -37,26 +37,16 @@ again. Both are checked by the test suite. See the
 
 ## Features
 
-- **Plan and apply**: field-level diff with `+`, `-`, `~`; text, JSON and
-  Markdown output; `apply` takes a snapshot first, then reads the profile
-  back and checks the plan is empty.
-- **Templates**: `extends` stacks templates onto a profile; arrays can keep
-  inherited entries with `"$inherit"`, maps drop them with `"$remove"`.
-- **List modes**: `authoritative` lists remove live items that are not
-  configured, `merge` lists leave them alone, and `ignore` skips paths.
-- **Drift and reconcile**: changes made outside `ndac` are told apart from
-  pending ones; `ndac reconcile` keeps the code or writes the live values
-  back into the TOML files, comments preserved.
-- **Import and rollback**: live profiles to TOML, and any snapshot back to
-  the live profile.
-- **Endpoints and doctor**: configuration for the NextDNS CLI,
-  systemd-resolved, NetworkManager, Android and DoH URLs, and a check that
-  this machine really uses the expected profile.
-- **Automation**: GitHub annotations and Prometheus metrics for drift, a
-  GitHub Actions workflow (`ndac init --github-actions`), and a hardened
-  systemd timer.
-- **Editor support**: JSON Schemas for completion and validation, and
-  diagnostics with file, line and hints.
+| Feature | What it does |
+| --- | --- |
+| Plan and apply | Field-level diff with `+`, `-`, `~`; text, JSON and Markdown output. `apply` takes a snapshot first, then reads the profile back and checks the plan is empty. |
+| Templates | `extends` stacks templates onto a profile; arrays keep inherited entries with `"$inherit"`, maps drop them with `"$remove"`. |
+| List modes | `authoritative` lists remove live items that are not configured, `merge` lists leave them alone, and `ignore` skips paths. |
+| Drift and reconcile | Changes made outside `ndac` are told apart from pending ones; `ndac reconcile` keeps the code or writes the live values back into the TOML files, comments preserved. |
+| Import and rollback | Live profiles to TOML, and any snapshot back to the live profile. |
+| Endpoints and doctor | Configuration for the NextDNS CLI, systemd-resolved, NetworkManager, Android and DoH URLs, and a check that this machine really uses the expected profile. |
+| Automation | GitHub annotations and Prometheus metrics for drift, a GitHub Actions workflow (`ndac init --github-actions`), and a hardened systemd timer. |
+| Editor support | JSON Schemas for completion and validation, and diagnostics with file, line and hints. |
 
 ## API key sources
 
@@ -64,14 +54,15 @@ The key can read and change the whole account, DNS logs included, so
 `ndac` never takes it as a command-line argument and never prints it.
 Sources, from most to least protected at rest:
 
-1. `systemd-cred:NAME`: systemd credentials, encrypted at rest.
-2. `keyring:SERVICE/USER`: the OS keyring (Secret Service, macOS Keychain).
-3. `cmd:PROGRAM ARGS`: a password manager, such as `pass` or `gopass`.
-4. `age:PATH`: an `age`-encrypted file (build feature `age`).
-5. `env-file:VAR` and `file:PATH`: a file, such as a container secret.
-6. `env:VAR`: an environment variable, convenient in CI.
-7. `dotenv` and `config`: a literal key in `.env` or `ndac.local.toml`,
-   allowed only in files that are private and not tracked by git.
+| Source | Where the key lives |
+| --- | --- |
+| `systemd-cred:NAME` | systemd credentials, encrypted at rest |
+| `keyring:SERVICE/USER` | the OS keyring (Secret Service, macOS Keychain) |
+| `cmd:PROGRAM ARGS` | a password manager, such as `pass` or `gopass` |
+| `age:PATH` | an `age`-encrypted file (build feature `age`) |
+| `env-file:VAR`, `file:PATH` | a file, such as a container secret |
+| `env:VAR` | an environment variable, convenient in CI |
+| `dotenv`, `config` | a literal key in `.env` or `ndac.local.toml`, allowed only in files that are private and not tracked by git |
 
 See [Authentication](https://esl1h.github.io/ndac/authentication.html).
 
