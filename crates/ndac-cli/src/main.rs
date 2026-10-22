@@ -13,9 +13,7 @@ mod commands;
 mod hardening;
 mod output;
 
-use cli::{
-    AuthCommand, Cli, ColorArg, Command, EndpointCommand, GlobalArgs, LogFormat, SnapshotCommand,
-};
+use cli::{AuthCommand, Cli, ColorArg, Command, GlobalArgs, LogFormat, SnapshotCommand};
 use output::{Exit, Output, RedactingStderr};
 
 fn main() -> ExitCode {
@@ -104,11 +102,7 @@ fn dispatch(cli: Cli, out: Output) -> commands::CmdResult {
             dir,
             github_actions,
         } => commands::init::run(&dir, github_actions, out),
-        Command::Endpoint(EndpointCommand::Render {
-            profile,
-            target,
-            device,
-        }) => commands::endpoint::render(config, &profile, target, device.as_deref()),
+        Command::Endpoint(cmd) => commands::endpoint::run(&cli.global, cmd),
         Command::Doctor {
             expect_profile,
             expect_device,

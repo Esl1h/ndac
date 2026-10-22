@@ -1,5 +1,5 @@
 //! The `unstable-endpoints` feature against the fake API: rewrites through
-//! import, plan, apply and drift.
+//! import, plan, apply and drift, and IPv6 servers from the setup endpoint.
 #![cfg(feature = "unstable-endpoints")]
 #![allow(clippy::unwrap_used, reason = "tests")]
 
@@ -153,4 +153,53 @@ async fn rewrites_merge_mode_and_new_profiles() {
         .unwrap()
         .to_owned();
     assert_eq!(names(&api, &new_id), [("a.lan".into(), "10.0.0.3".into())]);
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn endpoint_ipv6_from_setup() {
+    let api = FakeApi::start().await.unwrap();
+    let id = api.insert_profile(&json!({ "name": "Casa" }));
+    api.set_setup(
+        &id,
+        json!({ "ipv4": [], "ipv6": ["2a07:a8c0::ab:cd12", "2a07:a8c1::ab:cd12"], "dnscrypt": "", "linkedIp": { "updateToken": "secret-token" } }),
+    );
+    let dir = workspace(&api, Some(&format!("id = {id:?}\n")));
+    let o = run(
+        dir.path(),
+        &[
+            "endpoint",
+            "render",
+            "casa",
+            "--target",
+            "resolved",
+            "--api-ipv6",
+        ],
+    )
+    .await;
+    let out = text(&o);
+    assert!(o.status.success(), "{out}");
+    assert!(
+        out.contains(&format!("DNS=2a07:a8c0::ab:cd12#{id}.dns.nextdns.io")),
+        "{out}"
+    );
+    assert!(!out.contains("IPv6 servers are left out"), "{out}");
+    assert!(!out.contains("secret-token"), "{out}");
+
+    // Anything but an address is refused, since the networkmanager output
+    // is a shell script.
+    api.set_setup(&id, json!({ "ipv6": ["::1\"; rm -rf ~; \""] }));
+    let o = run(
+        dir.path(),
+        &[
+            "endpoint",
+            "render",
+            "casa",
+            "--target",
+            "networkmanager",
+            "--api-ipv6",
+        ],
+    )
+    .await;
+    assert_eq!(o.status.code(), Some(5), "{}", text(&o));
+    assert!(text(&o).contains("which is not an IPv6"), "{}", text(&o));
 }

@@ -341,6 +341,12 @@ pub(crate) enum EndpointCommand {
         /// Device name, so queries show up under it in NextDNS logs.
         #[arg(long, value_name = "NAME")]
         device: Option<String>,
+        /// Add the profile's IPv6 servers to the resolved and networkmanager
+        /// targets, read from the API. UNVERIFIED: uses the undocumented
+        /// setup endpoint.
+        #[cfg(feature = "unstable-endpoints")]
+        #[arg(long)]
+        api_ipv6: bool,
     },
 }
 
