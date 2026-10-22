@@ -1,7 +1,6 @@
 [files]
 extend-exclude = [
   "LICENSE-*",
-  "CODE_OF_CONDUCT.md",
   "**/tests/fixtures/**",
   "**/tests/snapshots/**",
   "schema/*.json",

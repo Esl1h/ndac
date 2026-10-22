@@ -119,11 +119,6 @@ rules, plans, drift, CI recipes, endpoints and troubleshooting. `ndac
 See [SECURITY.md](SECURITY.md) to report a vulnerability, and the
 [threat model](https://esl1h.github.io/ndac/security/threat-model.html).
 
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) and the
-[Code of Conduct](CODE_OF_CONDUCT.md).
-
 ## License
 
 Licensed under either of [Apache License, Version 2.0](LICENSE-APACHE) or
