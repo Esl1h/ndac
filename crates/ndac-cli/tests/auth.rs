@@ -148,7 +148,9 @@ async fn user_file_applies_below_the_repository() {
     let out = run(cmd).await;
     let stdout = text(&out.stdout);
     assert!(out.status.success(), "{}", text(&out.stderr));
-    assert!(stdout.contains("chain from ndac/config.toml:"), "{stdout}");
+    // Shown relative to the root directory where possible; on macOS the
+    // temporary directory is reached through a symlink, so it may be absolute.
+    assert!(stdout.contains("ndac/config.toml:"), "{stdout}");
     assert!(stdout.contains("✓ env:NDAC_TEST_USER  key found (used)"));
 
     // The repository's chain wins.
