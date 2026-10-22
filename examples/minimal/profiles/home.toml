@@ -1,0 +1,16 @@
+# No `id` yet: `ndac apply` creates the profile and writes its ID here.
+# To manage an existing profile instead, run `ndac import --profile ID`.
+name = "Home"
+
+[security]
+threatIntelligenceFeeds = true
+googleSafeBrowsing      = true
+
+[privacy]
+blocklists = ["nextdns-recommended"]
+
+[denylist]
+mode = "merge" # leave items added in the dashboard alone
+
+[denylist.items]
+"ads.example" = true

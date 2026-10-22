@@ -1,0 +1,17 @@
+# Shared by every profile.
+
+[security]
+threatIntelligenceFeeds = true
+googleSafeBrowsing      = true
+cryptojacking           = true
+dnsRebinding            = true
+idnHomographs           = true
+typosquatting           = true
+
+[privacy]
+blocklists        = ["nextdns-recommended"]
+disguisedTrackers = true
+
+[settings.logs]
+enabled   = true
+retention = "30d"

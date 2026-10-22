@@ -1,0 +1,9 @@
+name    = "Home"
+extends = ["base"]
+
+[endpoint]
+cacheSize = "10MB"
+
+# Kids' devices resolve through the "kids" profile on the router.
+[endpoint.conditional]
+"192.168.10.0/24" = "kids"

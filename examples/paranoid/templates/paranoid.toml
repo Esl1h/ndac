@@ -1,0 +1,33 @@
+[security]
+threatIntelligenceFeeds = true
+aiThreatDetection       = true
+googleSafeBrowsing      = true
+cryptojacking           = true
+dnsRebinding            = true
+idnHomographs           = true
+typosquatting           = true
+dga                     = true
+nrd                     = true
+ddns                    = true
+parking                 = true
+csam                    = true
+tlds                    = ["cf", "cn", "ru"]
+
+[privacy]
+blocklists        = ["nextdns-recommended", "oisd"]
+natives           = ["huawei", "samsung"]
+disguisedTrackers = true
+allowAffiliate    = false
+
+[settings]
+web3 = false
+
+[settings.logs]
+enabled = false
+
+[settings.logs.drop]
+ip     = true
+domain = true
+
+[settings.blockPage]
+enabled = true

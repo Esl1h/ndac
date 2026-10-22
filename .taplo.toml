@@ -1,5 +1,6 @@
 include = ["**/*.toml"]
-exclude = ["target/**", "fuzz/target/**"]
+# examples/ follows `ndac fmt`, which aligns `=`.
+exclude = ["target/**", "fuzz/target/**", "examples/**"]
 
 [formatting]
 indent_string = "  "

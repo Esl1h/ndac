@@ -1,0 +1,4 @@
+# One profile, no templates. The API key comes from NEXTDNS_API_KEY or the
+# OS keyring (`ndac auth set --backend keyring`).
+schema  = 1
+include = ["profiles/*.toml"]

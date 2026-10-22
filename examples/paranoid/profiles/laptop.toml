@@ -1,0 +1,11 @@
+name    = "Laptop"
+extends = ["paranoid"]
+
+[allowlist]
+mode = "authoritative"
+
+[allowlist.items]
+"login.example.com" = true
+
+[endpoint]
+reportClientInfo = false

@@ -1,0 +1,7 @@
+# Strict protection and minimal logging.
+schema  = 1
+include = ["profiles/*.toml", "templates/*.toml"]
+
+[auth]
+# A password manager or systemd credential instead of a plain variable.
+sources = ["systemd-cred:nextdns-api-key", "cmd:pass show nextdns/api-key"]

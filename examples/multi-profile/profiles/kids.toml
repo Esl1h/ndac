@@ -1,0 +1,12 @@
+name    = "Kids"
+extends = ["kids"]
+
+[privacy]
+# Everything from base, plus one more list.
+blocklists = ["$inherit", "oisd"]
+
+[denylist]
+mode = "authoritative" # only these items; others are removed
+
+[denylist.items]
+"games.example" = true

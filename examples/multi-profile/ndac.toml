@@ -1,0 +1,9 @@
+# Several profiles sharing settings through templates.
+schema  = 1
+include = ["profiles/*.toml", "templates/*.toml"]
+
+[provider]
+concurrency = 4
+
+[auth]
+sources = ["env:NEXTDNS_API_KEY", "keyring:nextdns/default"]

@@ -1,0 +1,14 @@
+# Parental controls, stacked on top of "base".
+extends = ["base"]
+
+[parentalControl]
+safeSearch            = true
+youtubeRestrictedMode = true
+blockBypass           = true
+
+[parentalControl.services]
+tiktok = true
+
+[parentalControl.categories]
+porn              = true
+"social-networks" = true

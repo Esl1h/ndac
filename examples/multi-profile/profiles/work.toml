@@ -1,0 +1,7 @@
+name    = "Work"
+extends = ["base"]
+# Managed by the IT team in the dashboard.
+ignore  = ["allowlist"]
+
+[settings.logs]
+retention = "90d"
