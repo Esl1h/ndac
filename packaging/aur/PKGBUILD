@@ -1,4 +1,4 @@
-# Maintainer: Esli Silva
+# Maintainer: Esli Silva <not.announced@simplelogin.fr>
 #
 # Template for the AUR package ndac-bin. packaging.yml sets pkgver and the
 # checksums from each GitHub release before pushing to the AUR.

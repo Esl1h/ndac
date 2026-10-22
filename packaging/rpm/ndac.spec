@@ -49,5 +49,5 @@ install -Dpm0644 systemd/ndac-drift.timer %{buildroot}%{_unitdir}/ndac-drift.tim
 %{_unitdir}/ndac-drift.timer
 
 %changelog
-* Wed Oct 21 2026 Esli Silva - 0.0.0-1
+* Wed Oct 21 2026 Esli Silva <not.announced@simplelogin.fr> - 0.0.0-1
 - Packaging template; packaging.yml sets the version for each release.
