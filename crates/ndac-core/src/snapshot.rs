@@ -91,6 +91,10 @@ impl SnapshotStore {
 
     /// Saves a snapshot and prunes old ones for that profile.
     ///
+    /// A top-level `setup` object is left out: it is not documented, and
+    /// other clients show it carrying the linked IP update token, a
+    /// credential that must not end up on disk or in CI artifacts.
+    ///
     /// # Errors
     ///
     /// I/O errors.
@@ -101,13 +105,17 @@ impl SnapshotStore {
         kind: SnapshotKind,
         data: &Value,
     ) -> io::Result<SnapshotEntry> {
+        let mut data = data.clone();
+        if let Some(m) = data.as_object_mut() {
+            m.remove("setup");
+        }
         let snap = Snapshot {
             format_version: SNAPSHOT_FORMAT_VERSION,
             profile: profile.to_owned(),
             id: id.to_owned(),
             kind,
             taken_at: rfc3339(SystemTime::now()),
-            data: data.clone(),
+            data,
         };
         let text = serde_json::to_string_pretty(&snap).map_err(io::Error::other)?;
         let pdir = self.profile_dir(profile)?;
@@ -389,6 +397,22 @@ mod tests {
         assert_eq!(mode(&e.path), 0o600);
         assert_eq!(mode(e.path.parent().unwrap()), 0o700);
         assert_eq!(mode(s.dir()), 0o700);
+    }
+
+    #[test]
+    fn setup_is_never_stored() {
+        let dir = tempfile::tempdir().unwrap();
+        let s = store(dir.path(), 5);
+        let data = json!({
+            "name": "Casa",
+            "setup": { "linkedIp": { "updateToken": "token-0000" } }
+        });
+        let e = s
+            .save("casa", "abc123", SnapshotKind::PreApply, &data)
+            .unwrap();
+        let text = fs::read_to_string(&e.path).unwrap();
+        assert!(!text.contains("token-0000"), "{text}");
+        assert_eq!(s.load(&e).unwrap().data, json!({ "name": "Casa" }));
     }
 
     #[test]

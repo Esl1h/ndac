@@ -10,7 +10,8 @@
   full account compromise and rotated in the dashboard.
 - **Snapshots** (`.ndac/snapshots/`): full profile JSON taken before each
   apply. They contain configuration, not logs, but reveal allow and deny
-  lists.
+  lists. A `setup` object in the profile response is never stored, since
+  it may hold the linked IP update token.
 - **Configuration**: the TOML files. Normally public-safe; they become
   sensitive only if they hold a literal key.
 
