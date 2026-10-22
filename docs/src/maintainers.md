@@ -21,7 +21,11 @@ configured in the GitHub UI or API.
       `main` (opens the release pull request).
 - [ ] Environment `nextdns-e2e` with required reviewers, holding
       `NEXTDNS_E2E_API_KEY` and `NEXTDNS_E2E_PROFILE_ID`.
-- [ ] GitHub Pages source set to GitHub Actions.
+- [ ] GitHub Pages source set to GitHub Actions (`docs.yml` deploys the
+      book on every push to `main` that changes `docs/`).
+- [ ] After the first crates.io release, set the repository variable
+      `SEMVER_CHECKS_ENABLED` to `true` to run `cargo semver-checks` on pull
+      requests.
 - [ ] Immutable releases enabled, if available for the account.
 - [ ] Codecov: repository activated, OIDC upload allowed.
 - [ ] Actions settings: "Read repository contents" as default `GITHUB_TOKEN`
