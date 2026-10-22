@@ -26,6 +26,9 @@ use crate::{
 /// Production API base URL.
 pub const DEFAULT_BASE_URL: &str = "https://api.nextdns.io";
 
+#[cfg(feature = "unstable-endpoints")]
+mod unstable;
+
 const X_API_KEY: HeaderName = HeaderName::from_static("x-api-key");
 const MAX_PAGES: usize = 10_000;
 

@@ -117,6 +117,9 @@ pub(crate) fn desired(key: &str, f: ProfileFile, source: PathBuf) -> DesiredProf
     if let Some(a) = &f.allowlist {
         list_modes.insert("allowlist".to_owned(), a.mode.unwrap_or_default());
     }
+    // Struct update syntax keeps this compiling when another crate enables
+    // `ndac-api/unstable-endpoints` without this crate's feature.
+    #[allow(clippy::needless_update, reason = "fields added by ndac-api features")]
     let desired = Profile {
         name: f.name,
         security: f.security.map(|s| Security {
@@ -182,6 +185,7 @@ pub(crate) fn desired(key: &str, f: ProfileFile, source: PathBuf) -> DesiredProf
             extra: BTreeMap::new(),
         }),
         extra: BTreeMap::new(),
+        ..Profile::default()
     };
     DesiredProfile {
         key: key.to_owned(),

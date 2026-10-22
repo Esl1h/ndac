@@ -2,7 +2,8 @@
 //!
 //! This crate has no CLI dependencies so it can be reused by other tools.
 //! It covers the documented profile endpoints only; the API is in beta and
-//! may change without notice.
+//! may change without notice. The `unstable-endpoints` feature adds
+//! rewrites and setup information, which are not documented.
 //!
 //! - Responses carrying an `errors` array are failures, including those
 //!   returned with HTTP `200`.
@@ -28,6 +29,8 @@ pub use model::{
     ActiveItem, BlockPage, Extra, IdItem, Logs, LogsDrop, ParentalControl, Performance, Privacy,
     Profile, ProfileSummary, Security, Settings,
 };
+#[cfg(feature = "unstable-endpoints")]
+pub use model::{Rewrite, Setup};
 pub use paths::{ListPath, ObjectPath};
 pub use resolver::{ResolverTest, TEST_URL, test_resolver};
 pub use retry::RetryPolicy;

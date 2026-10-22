@@ -37,9 +37,64 @@ pub struct Profile {
     /// General settings.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub settings: Option<Settings>,
+    /// DNS rewrites. UNVERIFIED: not in the API documentation.
+    #[cfg(feature = "unstable-endpoints")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rewrites: Option<Vec<Rewrite>>,
     /// Unknown fields.
     #[serde(flatten)]
     pub extra: Extra,
+}
+
+/// A DNS rewrite: queries for `name` are answered with `content`, an IP
+/// address or a hostname. UNVERIFIED: shape taken from the `nextdns-go`
+/// client, not from the API documentation.
+#[cfg(feature = "unstable-endpoints")]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Rewrite {
+    /// ID assigned by the API; absent in desired state.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub id: Option<String>,
+    /// Domain to rewrite.
+    pub name: String,
+    /// Answer: an IP address or a hostname.
+    pub content: String,
+    /// Unknown fields, e.g. the record type the API derives.
+    #[serde(flatten)]
+    pub extra: Extra,
+}
+
+#[cfg(feature = "unstable-endpoints")]
+impl Rewrite {
+    /// A rewrite with no ID and no extra fields.
+    #[must_use]
+    pub fn new(name: impl Into<String>, content: impl Into<String>) -> Self {
+        Self {
+            id: None,
+            name: name.into(),
+            content: content.into(),
+            extra: Extra::new(),
+        }
+    }
+}
+
+/// Setup information of a profile. UNVERIFIED: shape taken from the
+/// `nextdns-go` client, not from the API documentation.
+///
+/// Unknown fields are dropped on purpose: the response also carries the
+/// linked IP settings, whose update token is a credential.
+#[cfg(feature = "unstable-endpoints")]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize)]
+pub struct Setup {
+    /// IPv4 resolver addresses.
+    #[serde(default)]
+    pub ipv4: Vec<String>,
+    /// IPv6 resolver addresses, specific to the profile.
+    #[serde(default)]
+    pub ipv6: Vec<String>,
+    /// `DNSCrypt` stamp.
+    #[serde(default)]
+    pub dnscrypt: Option<String>,
 }
 
 /// `security` object.

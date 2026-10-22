@@ -12,6 +12,11 @@ authors.workspace = true
 keywords.workspace = true
 categories.workspace = true
 
+[features]
+# Rewrites and setup information. UNVERIFIED: not in the NextDNS API
+# documentation; shapes follow the nextdns-go client.
+unstable-endpoints = []
+
 [dependencies]
 fastrand.workspace = true
 httpdate.workspace = true
