@@ -2,6 +2,7 @@
 
 [Introduction](introduction.md)
 
+- [Installation](installation.md)
 - [Configuration](configuration.md)
 - [Authentication](authentication.md)
 - [Plan and drift](plan.md)

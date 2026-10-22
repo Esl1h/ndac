@@ -96,10 +96,23 @@ patterns.
   `ipv4.dns` was not confirmed.
 - `test.nextdns.io` is not documented. Its fields (`status`, `protocol`,
   `profile`, `client`, `srcIP`, `destIP`, `anycast`, `server`,
-  `clientName`) were checked against live responses only. Only `status =
-  "ok"` was observed; any other value is treated as "queries do not reach
-  NextDNS". The bare host answers some clients with a script page instead of
+  `clientName`) were checked against live responses only. The values `ok`
+  and `unconfigured` were observed; any value other than `ok` is treated as
+  "queries do not reach NextDNS". The bare host answers some clients with a script page instead of
   JSON, so `doctor` queries a random subdomain directly.
+
+## Release and packaging
+
+- The `.deb`, `.rpm`, AUR and COPR packages repackage the static musl
+  binary instead of building from source; `rpmlint` reports
+  `statically-linked-binary`, which is expected. They are not meant for the
+  official Debian or Fedora repositories.
+- The x86_64 macOS binary is cross-compiled on an Apple silicon runner and
+  is not executed during the build.
+- The `.deb` maintainer field has no email address, which Debian policy
+  expects; `dpkg` accepts it.
+- `ndac-drift.service` cannot create the snapshots it compares with; they
+  come from wherever `apply` runs (see [Installation](installation.md)).
 
 ## Fake API
 
