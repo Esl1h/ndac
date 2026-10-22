@@ -16,6 +16,11 @@
 //! Behavior the docs leave open (status codes for successful writes,
 //! duplicate items, error codes) follows the assumptions listed in
 //! `docs/src/known-limitations.md`.
+//!
+//! It also serves the undocumented `rewrites` and `setup` endpoints used by
+//! the `unstable-endpoints` feature (UNVERIFIED, shaped after the
+//! `nextdns-go` client). They are kept apart from the profile JSON, so
+//! `GET /profiles/:profile` does not change.
 #![forbid(unsafe_code)]
 // Handlers return `Err(Response)` to short-circuit; boxing them would only
 // add noise in a test fake.
@@ -120,6 +125,10 @@ struct State {
     latency: Duration,
     requests: Vec<RecordedRequest>,
     profile_extra: Map<String, Value>,
+    /// UNVERIFIED endpoints, per profile.
+    rewrites: BTreeMap<String, Vec<Value>>,
+    setup: BTreeMap<String, Value>,
+    next_rewrite: u32,
 }
 
 type Shared = Arc<Mutex<State>>;
@@ -172,6 +181,9 @@ impl FakeApiBuilder {
             latency: Duration::ZERO,
             requests: Vec::new(),
             profile_extra: self.profile_extra,
+            rewrites: BTreeMap::new(),
+            setup: BTreeMap::new(),
+            next_rewrite: 0,
         }));
         let listener = TcpListener::bind(("127.0.0.1", 0)).await?;
         let addr = listener.local_addr()?;
@@ -246,6 +258,32 @@ impl FakeApi {
         s.profiles.get_mut(id).map(edit).is_some()
     }
 
+    /// Rewrites of a profile, as `GET .../rewrites` returns them.
+    /// UNVERIFIED endpoint.
+    #[must_use]
+    pub fn rewrites(&self, id: &str) -> Vec<Value> {
+        lock(&self.state)
+            .rewrites
+            .get(id)
+            .cloned()
+            .unwrap_or_default()
+    }
+
+    /// Adds a rewrite as the dashboard would. UNVERIFIED endpoint.
+    pub fn insert_rewrite(&self, id: &str, name: &str, content: &str) {
+        let mut s = lock(&self.state);
+        let rewrite_id = s.allocate_rewrite_id();
+        s.rewrites
+            .entry(id.to_owned())
+            .or_default()
+            .push(json!({ "id": rewrite_id, "name": name, "type": "A", "content": content }));
+    }
+
+    /// Sets what `GET .../setup` returns for a profile. UNVERIFIED endpoint.
+    pub fn set_setup(&self, id: &str, setup: Value) {
+        lock(&self.state).setup.insert(id.to_owned(), setup);
+    }
+
     /// Every request received so far.
     #[must_use]
     pub fn requests(&self) -> Vec<RecordedRequest> {
@@ -282,6 +320,11 @@ impl State {
     fn allocate_id(&mut self) -> String {
         self.next_id += 1;
         format!("{:06x}", 0x00a0_0000 + self.next_id)
+    }
+
+    fn allocate_rewrite_id(&mut self) -> String {
+        self.next_rewrite += 1;
+        format!("{:x}", 0x00be_ef00 + self.next_rewrite)
     }
 
     fn take_fault(&mut self, method: &Method) -> Option<Fault> {
@@ -395,10 +438,18 @@ fn route(
                 Method::PATCH => patch_profile(s, id, body),
                 Method::DELETE => {
                     s.profiles.remove(id);
+                    s.rewrites.remove(id);
+                    s.setup.remove(id);
                     no_content()
                 }
                 _ => method_not_allowed(),
             }
+        }
+        [p, id, r, rest @ ..] if p == "profiles" && (r == "rewrites" || r == "setup") => {
+            if !s.profiles.contains_key(id) {
+                return not_found();
+            }
+            unstable(s, id, r, rest, method, query, body.as_ref())
         }
         [p, id, rest @ ..] if p == "profiles" => {
             let page_size = s.page_size;
@@ -407,6 +458,69 @@ fn route(
                 None => not_found(),
             }
         }
+        _ => not_found(),
+    }
+}
+
+/// UNVERIFIED endpoints: `GET`/`POST .../rewrites`,
+/// `DELETE .../rewrites/:id` and `GET .../setup`.
+fn unstable(
+    s: &mut State,
+    id: &str,
+    endpoint: &str,
+    rest: &[String],
+    method: &Method,
+    query: &BTreeMap<String, String>,
+    body: Option<&Value>,
+) -> Response {
+    match (endpoint, rest, method) {
+        ("setup", [], &Method::GET) => data(s.setup.get(id).cloned().unwrap_or_else(
+            || json!({ "ipv4": ["45.90.28.0", "45.90.30.0"], "ipv6": [], "dnscrypt": "" }),
+        )),
+        ("rewrites", [], &Method::GET) => page(
+            s.rewrites.get(id).map_or(&[][..], Vec::as_slice),
+            query,
+            s.page_size,
+        ),
+        ("rewrites", [], &Method::POST) => {
+            let (Some(name), Some(content)) = (
+                body.and_then(|b| b["name"].as_str()),
+                body.and_then(|b| b["content"].as_str()),
+            ) else {
+                return errors(
+                    StatusCode::BAD_REQUEST,
+                    "invalid",
+                    Some("name and content are required"),
+                    Some("/"),
+                );
+            };
+            if !is_domain(name) {
+                return user_error(
+                    "invalid",
+                    &format!("{name:?} is not a valid domain"),
+                    "/name",
+                );
+            }
+            let (name, content) = (name.to_owned(), content.to_owned());
+            let rewrite_id = s.allocate_rewrite_id();
+            let list = s.rewrites.entry(id.to_owned()).or_default();
+            if list.iter().any(|r| r["name"] == name.as_str()) {
+                return user_error("duplicate", "a rewrite for this name exists", "/name");
+            }
+            list.push(json!({ "id": rewrite_id, "name": name, "type": "A", "content": content }));
+            data(json!({ "id": rewrite_id }))
+        }
+        ("rewrites", [item], &Method::DELETE) => {
+            let list = s.rewrites.entry(id.to_owned()).or_default();
+            match list.iter().position(|r| r["id"] == item.as_str()) {
+                Some(i) => {
+                    list.remove(i);
+                    no_content()
+                }
+                None => not_found(),
+            }
+        }
+        ("rewrites" | "setup", [], _) | ("rewrites", [_], _) => method_not_allowed(),
         _ => not_found(),
     }
 }
