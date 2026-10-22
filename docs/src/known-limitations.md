@@ -63,8 +63,9 @@ patterns.
 - The `age:` source shells out to the `age` binary instead of using the
   `age` crate, so identities from plugins work the same way as with the
   command-line tool.
-- The per-user configuration file under `XDG_CONFIG_HOME` is not
-  implemented yet; `ndac.local.toml` covers machine-specific settings.
+- The user file is looked up under `XDG_CONFIG_HOME` on every platform,
+  not in the macOS or Windows configuration directories. `ndac` keeps no
+  per-user state, so `XDG_STATE_HOME` is not used.
 
 ## Apply
 

@@ -258,6 +258,8 @@ pub(crate) enum SchemaArg {
     Local,
     /// Profile and template files.
     Profile,
+    /// The per-user configuration file.
+    User,
 }
 
 #[derive(Debug, Subcommand)]

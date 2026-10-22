@@ -138,6 +138,9 @@ fn chain_origin(ws: &Workspace, profile: Option<&str>, global: &GlobalArgs) -> S
     if ws.root.auth.sources.is_some() {
         return ws.root_src.display.clone();
     }
+    if let Some((src, _)) = ws.user.as_ref().filter(|(_, u)| u.auth.sources.is_some()) {
+        return src.display.clone();
+    }
     "the built-in default".into()
 }
 

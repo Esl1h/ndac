@@ -20,7 +20,7 @@ yields a key wins.
 | `file:PATH` | a file | Trailing newline trimmed. |
 | `env:VAR` | an environment variable | Convenient in CI; visible to anything that can read the environment. |
 | `dotenv[:PATH]` | `NEXTDNS_API_KEY` in a `.env` file | Default search: `./.env`, then next to `ndac.toml`. Guardrails apply. |
-| `config` | `api_key` in `[auth]` | `ndac.local.toml` first, then `ndac.toml`, then the profile file. Guardrails apply. |
+| `config` | `api_key` in `[auth]` | `ndac.local.toml` first, then `ndac.toml`, then the profile file, then the user file. Guardrails apply. |
 
 The table is roughly ordered from most to least protected at rest.
 
@@ -31,7 +31,9 @@ The table is roughly ordered from most to least protected at rest.
 2. The profile's `[auth].sources`, for commands that act on that profile
    (for example a profile in a separate NextDNS account).
 3. `[auth].sources` from `ndac.local.toml`, then `ndac.toml`.
-4. The default chain: `systemd-cred:nextdns-api-key`,
+4. `[auth].sources` from the user file (see
+   [Configuration](configuration.md#files)).
+5. The default chain: `systemd-cred:nextdns-api-key`,
    `env-file:NEXTDNS_API_KEY_FILE`, `env:NEXTDNS_API_KEY`, `dotenv`,
    `keyring:nextdns/default`, `config`.
 
@@ -42,13 +44,13 @@ resolution with exit code 3, unless `on_source_error = "skip"`.
 
 ### Literal keys
 
-A literal key in `ndac.local.toml`, `ndac.toml`, a profile file or `.env`
-is allowed, with guardrails:
+A literal key in `ndac.local.toml`, `ndac.toml`, a profile file, the user
+file or `.env` is allowed, with guardrails:
 
 - the file must be readable only by its owner, who must be the current
   user. Fix with `chmod 600`. `allow_insecure_permissions = true` in
-  `ndac.local.toml` (or `NDAC_ALLOW_INSECURE_PERMISSIONS=1`) turns the error
-  into a warning;
+  `ndac.local.toml` or the user file (or `NDAC_ALLOW_INSECURE_PERMISSIONS=1`)
+  turns the error into a warning;
 - the file must not be tracked by git, and inside a work tree it must be
   ignored. `--allow-tracked-secret` overrides this for one run;
 - a warning names the file on every run; `quiet_literal = true` silences

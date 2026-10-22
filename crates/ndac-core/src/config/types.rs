@@ -45,6 +45,20 @@ pub struct LocalFile {
     pub output: OutputConfig,
 }
 
+/// Per-user defaults, `$XDG_CONFIG_HOME/ndac/config.toml`. Repository files
+/// take precedence over it.
+#[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+#[schemars(title = "ndac user configuration")]
+pub struct UserFile {
+    /// API key resolution.
+    #[serde(default)]
+    pub auth: AuthConfig,
+    /// Terminal output.
+    #[serde(default)]
+    pub output: OutputConfig,
+}
+
 /// `[provider]`.
 #[derive(Debug, Clone, Default, PartialEq, Serialize, Deserialize, JsonSchema)]
 #[serde(deny_unknown_fields)]

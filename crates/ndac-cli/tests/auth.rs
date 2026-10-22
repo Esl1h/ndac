@@ -30,6 +30,7 @@ fn ndac(dir: &Path) -> Command {
     let mut cmd = Command::cargo_bin("ndac").unwrap();
     cmd.current_dir(dir)
         .env("NO_COLOR", "1")
+        .env("XDG_CONFIG_HOME", dir)
         .env("HOME", dir)
         .env("GIT_CONFIG_GLOBAL", "/dev/null")
         .env("GIT_CONFIG_NOSYSTEM", "1");
@@ -132,6 +133,54 @@ async fn sources_lists_the_chain() {
     assert!(stdout.contains("· env:NDAC_TEST_A  missing: NDAC_TEST_A is not set"));
     assert!(stdout.contains("✓ env:NDAC_TEST_B  key found (used)"));
     assert!(stdout.contains("- config  not tried"));
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn user_file_applies_below_the_repository() {
+    let api = FakeApi::start().await.unwrap();
+    let dir = workspace(&api, "", &[]);
+    let user = dir.path().join("ndac/config.toml");
+    fs::create_dir_all(user.parent().unwrap()).unwrap();
+    fs::write(&user, "[auth]\nsources = [\"env:NDAC_TEST_USER\"]\n").unwrap();
+    let mut cmd = ndac(dir.path());
+    cmd.env("NDAC_TEST_USER", TEST_KEY)
+        .args(["auth", "sources"]);
+    let out = run(cmd).await;
+    let stdout = text(&out.stdout);
+    assert!(out.status.success(), "{}", text(&out.stderr));
+    assert!(stdout.contains("chain from ndac/config.toml:"), "{stdout}");
+    assert!(stdout.contains("✓ env:NDAC_TEST_USER  key found (used)"));
+
+    // The repository's chain wins.
+    let root = fs::read_to_string(dir.path().join("ndac.toml")).unwrap();
+    fs::write(
+        dir.path().join("ndac.toml"),
+        format!("{root}\n[auth]\nsources = [\"env:NDAC_TEST_ROOT\"]\n"),
+    )
+    .unwrap();
+    let mut cmd = ndac(dir.path());
+    cmd.env("NDAC_TEST_USER", TEST_KEY)
+        .args(["auth", "sources"]);
+    let stdout = text(&run(cmd).await.stdout);
+    assert!(stdout.contains("chain from ndac.toml:"), "{stdout}");
+    assert!(!stdout.contains("NDAC_TEST_USER"), "{stdout}");
+}
+
+#[test]
+fn user_file_accepts_only_auth_and_output() {
+    let dir = tempfile::tempdir().unwrap();
+    fs::write(dir.path().join("ndac.toml"), "schema = 1\n").unwrap();
+    fs::create_dir_all(dir.path().join("ndac")).unwrap();
+    fs::write(
+        dir.path().join("ndac/config.toml"),
+        "[provider]\nretries = 1\n",
+    )
+    .unwrap();
+    ndac(dir.path())
+        .arg("validate")
+        .assert()
+        .code(4)
+        .stderr(predicate::str::contains("provider"));
 }
 
 #[tokio::test(flavor = "multi_thread")]

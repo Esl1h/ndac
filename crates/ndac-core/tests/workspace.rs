@@ -5,7 +5,9 @@ mod common;
 
 use common::{ROOT, render, workspace};
 use ndac_api::{ActiveItem, IdItem};
-use ndac_core::config::{ConfigError, ListMode, Workspace, discover, types::OnSourceError};
+use ndac_core::config::{
+    ConfigError, ListMode, Workspace, discover, types::OnSourceError, user_config_path,
+};
 
 const BASE: &str = r#"
 [security]
@@ -200,6 +202,40 @@ fn local_override_wins() {
     assert_eq!(ws.provider().retries, Some(9));
     assert_eq!(ws.provider().concurrency, Some(8));
     assert_eq!(ws.auth().on_source_error, Some(OnSourceError::Skip));
+}
+
+#[test]
+fn user_file_is_below_the_repository() {
+    let (dir, root) = workspace(&[
+        ("ndac.toml", "schema = 1\n[auth]\nquiet_literal = true\n"),
+        (
+            "user/ndac/config.toml",
+            "[auth]\nquiet_literal = false\nsources = [\"env:X\"]\non_source_error = \"skip\"\n",
+        ),
+    ]);
+    let mut ws = Workspace::load(&root).unwrap();
+    ws.load_user(&dir.path().join("user/ndac/config.toml"))
+        .unwrap();
+    let auth = ws.auth();
+    assert_eq!(auth.quiet_literal, Some(true));
+    assert_eq!(auth.sources, Some(vec!["env:X".to_owned()]));
+    assert_eq!(auth.on_source_error, Some(OnSourceError::Skip));
+    // A missing user file is not an error.
+    ws.load_user(&dir.path().join("absent.toml")).unwrap();
+}
+
+#[test]
+fn user_file_path_follows_xdg() {
+    assert_eq!(
+        user_config_path(Some("/x".into()), Some("/home/u".into())),
+        Some("/x/ndac/config.toml".into())
+    );
+    // A relative XDG_CONFIG_HOME is invalid and ignored.
+    assert_eq!(
+        user_config_path(Some("rel".into()), Some("/home/u".into())),
+        Some("/home/u/.config/ndac/config.toml".into())
+    );
+    assert_eq!(user_config_path(None, None), None);
 }
 
 #[test]

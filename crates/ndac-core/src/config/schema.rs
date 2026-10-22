@@ -5,7 +5,7 @@
 
 use serde_json::Value;
 
-use super::types::{LocalFile, ProfileFile, RootFile};
+use super::types::{LocalFile, ProfileFile, RootFile, UserFile};
 
 /// Which file a schema describes.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -16,6 +16,8 @@ pub enum SchemaKind {
     Local,
     /// Profile and template files.
     Profile,
+    /// The per-user configuration file.
+    User,
 }
 
 /// The JSON Schema for `kind`.
@@ -25,6 +27,7 @@ pub fn json_schema(kind: SchemaKind) -> Value {
         SchemaKind::Root => schemars::schema_for!(RootFile),
         SchemaKind::Local => schemars::schema_for!(LocalFile),
         SchemaKind::Profile => schemars::schema_for!(ProfileFile),
+        SchemaKind::User => schemars::schema_for!(UserFile),
     };
     schema.to_value()
 }

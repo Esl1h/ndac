@@ -6,7 +6,7 @@ use std::{
 };
 
 use miette::Report;
-use ndac_core::config::{ConfigErrors, Workspace, discover};
+use ndac_core::config::{ConfigErrors, Workspace, discover, user_config_path};
 
 use crate::output::Exit;
 
@@ -113,7 +113,16 @@ pub(crate) fn root_path(explicit: Option<&Path>) -> Result<PathBuf, Failure> {
     discover(explicit, &cwd()?).map_err(|e| Failure::Config(e.into()))
 }
 
+/// The per-user configuration file, whether or not it exists.
+pub(crate) fn user_path() -> Option<PathBuf> {
+    user_config_path(env::var_os("XDG_CONFIG_HOME"), env::var_os("HOME"))
+}
+
 pub(crate) fn load(explicit: Option<&Path>) -> Result<Workspace, Failure> {
     let root = root_path(explicit)?;
-    Ok(Workspace::load(&root)?)
+    let mut ws = Workspace::load(&root)?;
+    if let Some(user) = user_path() {
+        ws.load_user(&user)?;
+    }
+    Ok(ws)
 }

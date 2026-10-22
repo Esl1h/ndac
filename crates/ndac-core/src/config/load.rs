@@ -2,6 +2,7 @@
 
 use std::{
     collections::BTreeMap,
+    ffi::OsString,
     fs,
     path::{Component, Path, PathBuf},
 };
@@ -15,7 +16,7 @@ use super::{
     merge::merge,
     schema::{SchemaKind, json_schema},
     source::{Seg, SourceFile},
-    types::{AuthConfig, LocalFile, OutputConfig, ProfileFile, ProviderConfig, RootFile},
+    types::{AuthConfig, LocalFile, OutputConfig, ProfileFile, ProviderConfig, RootFile, UserFile},
     values::suggest,
 };
 
@@ -25,6 +26,26 @@ pub const ROOT_FILE: &str = "ndac.toml";
 pub const LOCAL_FILE: &str = "ndac.local.toml";
 /// Directory whose files are templates; other included files are profiles.
 pub const TEMPLATES_DIR: &str = "templates";
+
+/// The per-user configuration file: `$XDG_CONFIG_HOME/ndac/config.toml`, or
+/// `~/.config/ndac/config.toml` when `XDG_CONFIG_HOME` is unset or not
+/// absolute, as the XDG Base Directory specification requires. The same
+/// path is used on every platform. `None` without a usable home directory.
+#[must_use]
+pub fn user_config_path(
+    xdg_config_home: Option<OsString>,
+    home: Option<OsString>,
+) -> Option<PathBuf> {
+    let base = xdg_config_home
+        .map(PathBuf::from)
+        .filter(|p| p.is_absolute())
+        .or_else(|| {
+            home.map(PathBuf::from)
+                .filter(|p| p.is_absolute())
+                .map(|h| h.join(".config"))
+        })?;
+    Some(base.join("ndac").join("config.toml"))
+}
 
 /// Finds the root file: `explicit` if given, else the nearest `ndac.toml`
 /// in `cwd` or a parent directory.
@@ -84,6 +105,8 @@ pub struct Workspace {
     pub root: RootFile,
     /// The local override, if present.
     pub local: Option<(SourceFile, LocalFile)>,
+    /// The per-user file, if loaded with [`Workspace::load_user`].
+    pub user: Option<(SourceFile, UserFile)>,
     /// Templates by key.
     pub templates: BTreeMap<String, Entry>,
     /// Profiles by key.
@@ -176,6 +199,7 @@ impl Workspace {
             root_src,
             root,
             local,
+            user: None,
             templates,
             profiles,
         };
@@ -210,6 +234,31 @@ impl Workspace {
         out
     }
 
+    /// Loads the per-user file at `path`, if it exists, below the repository
+    /// files.
+    ///
+    /// # Errors
+    ///
+    /// Unreadable or invalid file.
+    pub fn load_user(&mut self, path: &Path) -> Result<(), ConfigErrors> {
+        if !path.is_file() {
+            return Ok(());
+        }
+        let src = read(path, &self.root_dir)?;
+        let mut errors = Vec::new();
+        if let Some(u) = parse_checked::<UserFile>(&src, SchemaKind::User, &mut errors) {
+            check::auth(&src, &u.auth, &[Seg::Key("auth")], &mut errors);
+            if errors.is_empty() {
+                self.user = Some((src, u));
+            }
+        }
+        if errors.is_empty() {
+            Ok(())
+        } else {
+            Err(ConfigErrors { errors })
+        }
+    }
+
     /// Effective `[provider]`: root merged with the local override.
     #[must_use]
     pub fn provider(&self) -> ProviderConfig {
@@ -228,23 +277,19 @@ impl Workspace {
         }
     }
 
-    /// Effective root `[auth]`: root merged with the local override.
+    /// Effective root `[auth]`: the local override, then the root file,
+    /// then the user file.
     #[must_use]
     pub fn auth(&self) -> AuthConfig {
-        let root = self.root.auth.clone();
-        let Some((_, local)) = &self.local else {
-            return root;
-        };
-        let l = local.auth.clone();
-        AuthConfig {
-            sources: l.sources.or(root.sources),
-            api_key: l.api_key.or(root.api_key),
-            on_source_error: l.on_source_error.or(root.on_source_error),
-            allow_insecure_permissions: l
-                .allow_insecure_permissions
-                .or(root.allow_insecure_permissions),
-            quiet_literal: l.quiet_literal.or(root.quiet_literal),
-            cmd_timeout: l.cmd_timeout.or(root.cmd_timeout),
+        let local = self
+            .local
+            .as_ref()
+            .map(|(_, l)| l.auth.clone())
+            .unwrap_or_default();
+        let repo = or_auth(local, &self.root.auth);
+        match &self.user {
+            Some((_, u)) => or_auth(repo, &u.auth),
+            None => repo,
         }
     }
 
@@ -252,8 +297,9 @@ impl Workspace {
     #[must_use]
     pub fn output(&self) -> OutputConfig {
         let local = self.local.as_ref().and_then(|(_, l)| l.output.color);
+        let user = self.user.as_ref().and_then(|(_, u)| u.output.color);
         OutputConfig {
-            color: local.or(self.root.output.color),
+            color: local.or(self.root.output.color).or(user),
         }
     }
 
@@ -402,6 +448,21 @@ pub fn config_files(root_path: &Path) -> Result<Vec<PathBuf>, ConfigErrors> {
     }
     out.extend(include_files(&root_dir, &include).map_err(|errors| ConfigErrors { errors })?);
     Ok(out)
+}
+
+/// `top`, with unset fields taken from `below`.
+fn or_auth(top: AuthConfig, below: &AuthConfig) -> AuthConfig {
+    let b = below.clone();
+    AuthConfig {
+        sources: top.sources.or(b.sources),
+        api_key: top.api_key.or(b.api_key),
+        on_source_error: top.on_source_error.or(b.on_source_error),
+        allow_insecure_permissions: top
+            .allow_insecure_permissions
+            .or(b.allow_insecure_permissions),
+        quiet_literal: top.quiet_literal.or(b.quiet_literal),
+        cmd_timeout: top.cmd_timeout.or(b.cmd_timeout),
+    }
 }
 
 fn read(path: &Path, root_dir: &Path) -> Result<SourceFile, ConfigErrors> {

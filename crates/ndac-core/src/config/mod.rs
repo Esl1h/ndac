@@ -22,7 +22,7 @@ pub use error::{ConfigError, ConfigErrors};
 pub use fmt::format_toml;
 pub use load::{
     Entry, LOCAL_FILE, ROOT_FILE, TEMPLATES_DIR, Workspace, config_files, discover, fold_layers,
-    include_files,
+    include_files, user_config_path,
 };
 pub use merge::{ids as merge_ids, items as merge_items, merge};
 pub use schema::{SchemaKind, json_schema, json_schema_text};

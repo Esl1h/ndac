@@ -14,6 +14,7 @@ pub(crate) fn run(kind: SchemaArg) -> CmdResult {
         SchemaArg::Root => SchemaKind::Root,
         SchemaArg::Local => SchemaKind::Local,
         SchemaArg::Profile => SchemaKind::Profile,
+        SchemaArg::User => SchemaKind::User,
     };
     Output::artifact(&json_schema_text(kind))
         .map_err(|e| Failure::Other(Report::msg(format!("cannot write output: {e}"))))?;

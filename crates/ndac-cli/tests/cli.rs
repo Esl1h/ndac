@@ -24,7 +24,8 @@ fn ndac(dir: &Path) -> Command {
     cmd.current_dir(dir)
         .env_remove("NDAC_CONFIG")
         .env_remove("NDAC_LOG")
-        .env("NO_COLOR", "1");
+        .env("NO_COLOR", "1")
+        .env("XDG_CONFIG_HOME", dir);
     cmd
 }
 

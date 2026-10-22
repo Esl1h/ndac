@@ -14,6 +14,7 @@ fn ndac(dir: &Path) -> Command {
     let mut cmd = Command::cargo_bin("ndac").unwrap();
     cmd.current_dir(dir)
         .env("NO_COLOR", "1")
+        .env("XDG_CONFIG_HOME", dir)
         .env_remove("NDAC_CONFIG");
     cmd
 }

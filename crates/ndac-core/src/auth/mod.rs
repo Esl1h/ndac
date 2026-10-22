@@ -87,12 +87,14 @@ pub struct Context {
     pub root_dir: PathBuf,
     /// Working directory.
     pub cwd: PathBuf,
-    /// Literal keys in precedence order: local file, root file, profile.
+    /// Literal keys in precedence order: local file, root file, profile,
+    /// user file.
     pub literals: Vec<Literal>,
     /// What to do when a source fails.
     pub on_source_error: OnSourceError,
     /// Downgrade insecure permissions to a warning. Only honored from
-    /// `ndac.local.toml` or `NDAC_ALLOW_INSECURE_PERMISSIONS=1`.
+    /// `ndac.local.toml`, the user file or
+    /// `NDAC_ALLOW_INSECURE_PERMISSIONS=1`.
     pub allow_insecure_permissions: bool,
     /// Allow a literal key in a file that git tracks (CLI flag only).
     pub allow_tracked_secret: bool,
@@ -235,9 +237,9 @@ pub fn probe(source: &SourceRef, ctx: &Context, env: &dyn Env) -> Probe {
 /// when `None`): literal keys in precedence order, and settings where the
 /// profile's `[auth]` overrides the root's.
 ///
-/// `allow_insecure_permissions` is only honored from `ndac.local.toml` or
-/// `NDAC_ALLOW_INSECURE_PERMISSIONS=1`, so a committed file cannot weaken
-/// the check for everyone who clones it.
+/// `allow_insecure_permissions` is only honored from `ndac.local.toml`, the
+/// user file or `NDAC_ALLOW_INSECURE_PERMISSIONS=1`, so a committed file
+/// cannot weaken the check for everyone who clones it.
 #[must_use]
 pub fn context(
     ws: &Workspace,
@@ -271,6 +273,14 @@ pub fn context(
             path: e.src.path.clone(),
         });
     }
+    if let Some((src, u)) = &ws.user
+        && let Some(k) = &u.auth.api_key
+    {
+        ctx.literals.push(Literal {
+            key: k.clone(),
+            path: src.path.clone(),
+        });
+    }
 
     let root = ws.auth();
     let pick = |f: fn(&AuthConfig) -> Option<bool>| profile_auth.and_then(f).or_else(|| f(&root));
@@ -281,6 +291,11 @@ pub fn context(
     ctx.quiet_literal = pick(|a| a.quiet_literal).unwrap_or(false);
     ctx.allow_insecure_permissions = local
         .and_then(|(_, l)| l.auth.allow_insecure_permissions)
+        .or_else(|| {
+            ws.user
+                .as_ref()
+                .and_then(|(_, u)| u.auth.allow_insecure_permissions)
+        })
         .unwrap_or(false)
         || env.var("NDAC_ALLOW_INSECURE_PERMISSIONS").as_deref() == Some("1");
     ctx.allow_tracked_secret = allow_tracked_secret;

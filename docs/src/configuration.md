@@ -16,10 +16,15 @@
   exists. It may only contain `[provider]`, `[auth]` and `[output]`, which
   override the root file. Keep it out of git; `ndac init` adds it to
   `.gitignore`.
+- The user file, `$XDG_CONFIG_HOME/ndac/config.toml` (or
+  `~/.config/ndac/config.toml`, on every platform), holds personal defaults
+  for all configuration directories. It may only contain `[auth]` and
+  `[output]`; `ndac.local.toml` and `ndac.toml` override it.
 
 Editors get completion and validation from the JSON Schemas in `schema/`
 (`ndac.schema.json` for the root file, `ndac-profile.schema.json` for
-profiles and templates). `ndac schema --kind root|local|profile` prints them.
+profiles and templates). `ndac schema --kind root|local|profile|user` prints
+them.
 
 ## Profiles and templates
 
