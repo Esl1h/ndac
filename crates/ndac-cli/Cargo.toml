@@ -20,6 +20,8 @@ path = "src/main.rs"
 default = ["keyring"]
 keyring = ["ndac-core/keyring"]
 age = ["ndac-core/age"]
+# Builds tests/live_e2e.rs, which talks to the real API (run with --ignored).
+live-e2e = []
 
 [dependencies]
 clap.workspace = true

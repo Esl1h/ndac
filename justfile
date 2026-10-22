@@ -51,3 +51,8 @@ release-dry:
     packaging/scripts/archive.sh "$(cargo pkgid -p ndac | sed 's/.*[#@]//')" \
         "$(rustc -vV | sed -n 's/^host: //p')" target/release/ndac target/assets target/dist
     cd target/dist && sha256sum -- * > SHA256SUMS && cat SHA256SUMS
+
+# Live test against a throwaway NextDNS profile; needs NEXTDNS_E2E_API_KEY
+# and NEXTDNS_E2E_PROFILE_ID
+e2e:
+    cargo test -p ndac --features live-e2e --test live_e2e -- --ignored
