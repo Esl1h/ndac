@@ -220,3 +220,44 @@ fn schema_is_json() {
         assert!(v["properties"].is_object(), "{kind}");
     }
 }
+
+#[test]
+fn color_comes_from_flag_then_repository_then_user_file() {
+    const ESC: &str = "\u{1b}[";
+    let dir = tempfile::tempdir().unwrap();
+    let root = "schema = 1\ninclude = [\"profiles/*.toml\"]\n";
+    fs::create_dir_all(dir.path().join("profiles")).unwrap();
+    // A broken profile, so that validate prints a diagnostic.
+    fs::write(
+        dir.path().join("profiles/home.toml"),
+        "extends = [\"nope\"]\n",
+    )
+    .unwrap();
+    fs::create_dir_all(dir.path().join("ndac")).unwrap();
+    let stderr = |args: &[&str]| {
+        let out = ndac(dir.path()).args(args).output().unwrap();
+        assert_eq!(out.status.code(), Some(4));
+        String::from_utf8_lossy(&out.stderr).into_owned()
+    };
+
+    fs::write(dir.path().join("ndac.toml"), root).unwrap();
+    assert!(!stderr(&["validate"]).contains(ESC), "auto with NO_COLOR");
+
+    fs::write(
+        dir.path().join("ndac/config.toml"),
+        "[output]\ncolor = \"always\"\n",
+    )
+    .unwrap();
+    assert!(stderr(&["validate"]).contains(ESC), "user file");
+
+    fs::write(
+        dir.path().join("ndac.toml"),
+        format!("{root}\n[output]\ncolor = \"never\"\n"),
+    )
+    .unwrap();
+    assert!(!stderr(&["validate"]).contains(ESC), "repository wins");
+    assert!(
+        stderr(&["--color", "always", "validate"]).contains(ESC),
+        "flag wins"
+    );
+}

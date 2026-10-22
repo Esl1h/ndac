@@ -26,6 +26,13 @@ Editors get completion and validation from the JSON Schemas in `schema/`
 profiles and templates). `ndac schema --kind root|local|profile|user` prints
 them.
 
+## Output
+
+`[output].color` is `auto` (the default), `always` or `never`. `--color`
+overrides it; otherwise `ndac.local.toml`, `ndac.toml` and the user file
+are read in that order. In `auto` mode, `NO_COLOR`, `CLICOLOR_FORCE` and
+`TERM=dumb` are honored.
+
 ## Profiles and templates
 
 A profile or template file is the profile itself, using the API's camelCase

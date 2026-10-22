@@ -16,7 +16,10 @@ use super::{
     merge::merge,
     schema::{SchemaKind, json_schema},
     source::{Seg, SourceFile},
-    types::{AuthConfig, LocalFile, OutputConfig, ProfileFile, ProviderConfig, RootFile, UserFile},
+    types::{
+        AuthConfig, ColorChoice, LocalFile, OutputConfig, ProfileFile, ProviderConfig, RootFile,
+        UserFile,
+    },
     values::suggest,
 };
 
@@ -45,6 +48,29 @@ pub fn user_config_path(
                 .map(|h| h.join(".config"))
         })?;
     Some(base.join("ndac").join("config.toml"))
+}
+
+/// The `[output].color` preference, read without validating anything else
+/// so that it can apply before a command loads its configuration: the local
+/// override, then the root file, then the user file. Unreadable or invalid
+/// files count as unset; commands that load them report the problem.
+#[must_use]
+pub fn color_preference(root_path: Option<&Path>, user_path: Option<&Path>) -> Option<ColorChoice> {
+    #[derive(serde::Deserialize)]
+    struct OutputOnly {
+        #[serde(default)]
+        output: OutputConfig,
+    }
+    let color = |p: &Path| {
+        let text = fs::read_to_string(p).ok()?;
+        toml::from_str::<OutputOnly>(&text).ok()?.output.color
+    };
+    let local = root_path.and_then(Path::parent).map(|d| d.join(LOCAL_FILE));
+    local
+        .as_deref()
+        .and_then(color)
+        .or_else(|| root_path.and_then(color))
+        .or_else(|| user_path.and_then(color))
 }
 
 /// Finds the root file: `explicit` if given, else the nearest `ndac.toml`

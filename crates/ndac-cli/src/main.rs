@@ -5,6 +5,7 @@
 use std::process::ExitCode;
 
 use clap::Parser;
+use ndac_core::config::{color_preference, types::ColorChoice};
 use tracing_subscriber::{EnvFilter, fmt};
 
 mod cli;
@@ -12,7 +13,9 @@ mod commands;
 mod hardening;
 mod output;
 
-use cli::{AuthCommand, Cli, Command, EndpointCommand, GlobalArgs, LogFormat, SnapshotCommand};
+use cli::{
+    AuthCommand, Cli, ColorArg, Command, EndpointCommand, GlobalArgs, LogFormat, SnapshotCommand,
+};
 use output::{Exit, Output, RedactingStderr};
 
 fn main() -> ExitCode {
@@ -31,7 +34,7 @@ fn main() -> ExitCode {
             .into();
         }
     };
-    let out = Output::new(cli.global.quiet, cli.global.color);
+    let out = Output::new(cli.global.quiet, color_arg(&cli.global));
     init_logging(&cli.global, out.color);
     install_miette_hook(out.color);
 
@@ -139,6 +142,19 @@ fn dispatch(cli: Cli, out: Output) -> commands::CmdResult {
             path,
         }) => commands::auth::set(&cli.global, backend, &keyring, path.as_deref(), out),
     }
+}
+
+/// `--color`, else `[output].color` from configuration, else auto.
+fn color_arg(global: &GlobalArgs) -> ColorArg {
+    global.color.unwrap_or_else(|| {
+        let root = commands::root_path(global.config.as_deref()).ok();
+        let user = commands::user_path();
+        match color_preference(root.as_deref(), user.as_deref()) {
+            Some(ColorChoice::Always) => ColorArg::Always,
+            Some(ColorChoice::Never) => ColorArg::Never,
+            Some(ColorChoice::Auto) | None => ColorArg::Auto,
+        }
+    })
 }
 
 fn init_logging(global: &GlobalArgs, color: bool) {

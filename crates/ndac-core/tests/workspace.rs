@@ -6,7 +6,9 @@ mod common;
 use common::{ROOT, render, workspace};
 use ndac_api::{ActiveItem, IdItem};
 use ndac_core::config::{
-    ConfigError, ListMode, Workspace, discover, types::OnSourceError, user_config_path,
+    ConfigError, ListMode, Workspace, color_preference, discover,
+    types::{ColorChoice, OnSourceError},
+    user_config_path,
 };
 
 const BASE: &str = r#"
@@ -236,6 +238,37 @@ fn user_file_path_follows_xdg() {
         Some("/home/u/.config/ndac/config.toml".into())
     );
     assert_eq!(user_config_path(None, None), None);
+}
+
+#[test]
+fn color_preference_order() {
+    let (dir, root) = workspace(&[
+        (
+            "ndac.toml",
+            "schema = 1\nbogus = 1\n[output]\ncolor = \"never\"\n",
+        ),
+        ("user.toml", "[output]\ncolor = \"always\"\n"),
+    ]);
+    let user = dir.path().join("user.toml");
+    // Other keys, even invalid ones, do not hide the preference.
+    assert_eq!(
+        color_preference(Some(&root), Some(&user)),
+        Some(ColorChoice::Never)
+    );
+    std::fs::write(
+        dir.path().join("ndac.local.toml"),
+        "[output]\ncolor = \"auto\"\n",
+    )
+    .unwrap();
+    assert_eq!(
+        color_preference(Some(&root), Some(&user)),
+        Some(ColorChoice::Auto)
+    );
+    assert_eq!(
+        color_preference(None, Some(&user)),
+        Some(ColorChoice::Always)
+    );
+    assert_eq!(color_preference(None, None), None);
 }
 
 #[test]

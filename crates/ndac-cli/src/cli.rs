@@ -56,10 +56,11 @@ pub(crate) struct GlobalArgs {
     #[arg(short, long, global = true, conflicts_with = "verbose")]
     pub(crate) quiet: bool,
 
-    /// When to use colors. `NO_COLOR`, `CLICOLOR_FORCE` and `TERM=dumb` are
-    /// honored in auto mode.
-    #[arg(long, global = true, value_enum, default_value_t = ColorArg::Auto)]
-    pub(crate) color: ColorArg,
+    /// When to use colors [default: `[output].color` from configuration,
+    /// else auto]. `NO_COLOR`, `CLICOLOR_FORCE` and `TERM=dumb` are honored
+    /// in auto mode.
+    #[arg(long, global = true, value_enum)]
+    pub(crate) color: Option<ColorArg>,
 
     /// Log line format.
     #[arg(long, global = true, value_enum, default_value_t = LogFormat::Text)]
