@@ -1,6 +1,5 @@
 # Developer tasks. Run `just --list` for a summary.
-# Recipes for fuzz, e2e and release-dry are added in the phases that
-# introduce those features.
+# Recipes for fuzz and e2e are added in the phase that introduces them.
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
@@ -42,3 +41,13 @@ schema:
 lint-actions:
     actionlint
     zizmor --offline .github
+
+# Build this host's release archive and SHA256SUMS into target/dist, as
+# release.yml does, without publishing anything
+release-dry:
+    cargo build --release --locked -p ndac
+    rm -rf target/assets target/dist
+    packaging/scripts/assets.sh target/release/ndac target/assets
+    packaging/scripts/archive.sh "$(cargo pkgid -p ndac | sed 's/.*[#@]//')" \
+        "$(rustc -vV | sed -n 's/^host: //p')" target/release/ndac target/assets target/dist
+    cd target/dist && sha256sum -- * > SHA256SUMS && cat SHA256SUMS
