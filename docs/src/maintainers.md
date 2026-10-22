@@ -67,6 +67,9 @@ Releases are cut by merging the pull request that release-plz keeps open on
       trusted publisher: repository `Esl1h/ndac`, workflow `release-plz.yml`,
       environment `release`. Revoke the token. Push the tag `v0.1.0` by hand
       for the first binary release.
+- [ ] **Enable release-plz**: once the App and the crates exist, set the
+      repository variable `RELEASE_PLZ_ENABLED` to `true`. Until then
+      `release-plz.yml` skips its jobs.
 - [ ] **GHCR**: after the first image push, make the package
       `ghcr.io/esl1h/ndac` public and link it to this repository.
 - [ ] **AUR** (optional): create the package `ndac-bin` on the AUR with a

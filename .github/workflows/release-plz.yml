@@ -7,8 +7,9 @@ name: Release-plz
 # Setup (docs/src/maintainers.md): a GitHub App with contents and pull
 # requests write access, its client ID in the `RELEASE_APP_CLIENT_ID`
 # variable and its private key in the `RELEASE_APP_PRIVATE_KEY` secret of the
-# `release-plz` and `release` environments. The App token is used because
-# pull requests and tags created with GITHUB_TOKEN do not start workflows.
+# `release-plz` and `release` environments, then the repository variable
+# RELEASE_PLZ_ENABLED set to "true". The App token is used because pull
+# requests and tags created with GITHUB_TOKEN do not start workflows.
 
 on:
   push:
@@ -23,7 +24,7 @@ concurrency:
 jobs:
   release-pr:
     name: release PR
-    if: github.repository == 'Esl1h/ndac'
+    if: github.repository == 'Esl1h/ndac' && vars.RELEASE_PLZ_ENABLED == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     environment: release-plz
@@ -58,7 +59,7 @@ jobs:
     # Only the merge of a release PR (default title `chore: release ...`)
     # needs the protected environment; other pushes skip this job.
     if: >-
-      github.repository == 'Esl1h/ndac' &&
+      github.repository == 'Esl1h/ndac' && vars.RELEASE_PLZ_ENABLED == 'true' &&
       startsWith(github.event.head_commit.message, 'chore: release')
     runs-on: ubuntu-latest
     timeout-minutes: 30
