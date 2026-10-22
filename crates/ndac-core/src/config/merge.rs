@@ -35,6 +35,8 @@ pub fn merge(base: ProfileFile, over: ProfileFile) -> ProfileFile {
         parental_control: opt(base.parental_control, over.parental_control, parental),
         denylist: domain_list(base.denylist, over.denylist),
         allowlist: domain_list(base.allowlist, over.allowlist),
+        #[cfg(feature = "unstable-endpoints")]
+        rewrites: rewrites(base.rewrites, over.rewrites),
         settings: opt(base.settings, over.settings, settings),
         endpoint: over.endpoint,
     }
@@ -135,6 +137,37 @@ fn domain_list(
             Some(DomainListConfig {
                 mode: o.mode,
                 items: items(b.items, o.items),
+            })
+        }
+    }
+}
+
+#[cfg(feature = "unstable-endpoints")]
+fn rewrites(
+    b: Option<super::types::RewritesConfig>,
+    o: Option<super::types::RewritesConfig>,
+) -> Option<super::types::RewritesConfig> {
+    match (b, o) {
+        (None, None) => None,
+        (b, o) => {
+            let (b, o) = (b.unwrap_or_default(), o.unwrap_or_default());
+            let items = match (b.items, o.items) {
+                (b, None) => b,
+                (b, Some(o)) => {
+                    let mut out = b.unwrap_or_default();
+                    for (k, v) in o {
+                        if v == super::check::REMOVE {
+                            out.remove(&k);
+                        } else {
+                            out.insert(k, v);
+                        }
+                    }
+                    Some(out)
+                }
+            };
+            Some(super::types::RewritesConfig {
+                mode: o.mode,
+                items,
             })
         }
     }

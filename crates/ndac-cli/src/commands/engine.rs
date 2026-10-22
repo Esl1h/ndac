@@ -15,6 +15,7 @@ use miette::Report;
 use ndac_api::Profile;
 use ndac_core::{
     apply::{self, ApiCall, Outcome},
+    client::live_profile,
     config::DesiredProfile,
     plan::{self, Plan, ProfilePlan, RemovedProfile},
     snapshot::SnapshotKind,
@@ -282,7 +283,7 @@ pub(crate) fn run(
         let client = session.client(&key)?;
         let after = session
             .rt
-            .block_on(client.get_profile(&id))
+            .block_on(live_profile(&client, &id))
             .map_err(Failure::api)?;
         // Only what was planned counts: `--target` and `reconcile` leave
         // other differences alone on purpose.

@@ -100,6 +100,17 @@ pub(crate) fn prenormalize(f: &mut ProfileFile) {
             *t = normalize_tld(t);
         }
     }
+    #[cfg(feature = "unstable-endpoints")]
+    if let Some(r) = f.rewrites.as_mut()
+        && let Some(items) = r.items.take()
+    {
+        r.items = Some(
+            items
+                .into_iter()
+                .map(|(k, v)| (normalize_domain(&k).unwrap_or(k), v))
+                .collect(),
+        );
+    }
 }
 
 /// The form a TLD takes in configuration: no surrounding space or leading
@@ -117,10 +128,17 @@ pub(crate) fn desired(key: &str, f: ProfileFile, source: PathBuf) -> DesiredProf
     if let Some(a) = &f.allowlist {
         list_modes.insert("allowlist".to_owned(), a.mode.unwrap_or_default());
     }
+    #[cfg(feature = "unstable-endpoints")]
+    if let Some(r) = &f.rewrites {
+        list_modes.insert("rewrites".to_owned(), r.mode.unwrap_or_default());
+    }
+    #[cfg(feature = "unstable-endpoints")]
+    let rewrites = f.rewrites.map(rewrite_list);
     // Struct update syntax keeps this compiling when another crate enables
     // `ndac-api/unstable-endpoints` without this crate's feature.
     #[allow(clippy::needless_update, reason = "fields added by ndac-api features")]
-    let desired = Profile {
+    #[cfg_attr(not(feature = "unstable-endpoints"), allow(unused_mut))]
+    let mut desired = Profile {
         name: f.name,
         security: f.security.map(|s| Security {
             threat_intelligence_feeds: s.threat_intelligence_feeds,
@@ -187,6 +205,10 @@ pub(crate) fn desired(key: &str, f: ProfileFile, source: PathBuf) -> DesiredProf
         extra: BTreeMap::new(),
         ..Profile::default()
     };
+    #[cfg(feature = "unstable-endpoints")]
+    {
+        desired.rewrites = rewrites;
+    }
     DesiredProfile {
         key: key.to_owned(),
         id: f.id.filter(|id| !id.is_empty()),
@@ -196,6 +218,15 @@ pub(crate) fn desired(key: &str, f: ProfileFile, source: PathBuf) -> DesiredProf
         desired,
         source,
     }
+}
+
+#[cfg(feature = "unstable-endpoints")]
+fn rewrite_list(r: super::types::RewritesConfig) -> Vec<ndac_api::Rewrite> {
+    r.items
+        .unwrap_or_default()
+        .into_iter()
+        .map(|(name, content)| ndac_api::Rewrite::new(name, content))
+        .collect()
 }
 
 fn id_items(mut ids: Vec<String>) -> Vec<IdItem> {

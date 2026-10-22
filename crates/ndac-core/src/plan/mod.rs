@@ -35,7 +35,42 @@ pub const LIST_PATHS: &[(&str, bool)] = &[
     ("parentalControl.categories", true),
     ("denylist", true),
     ("allowlist", true),
+    ("rewrites", false),
 ];
+
+/// Separates name and answer in the item ID of a rewrite. A rewrite is
+/// identified by both, so a changed answer is a removal and an addition,
+/// which is also how the API changes it.
+pub const REWRITE_SEP: &str = " → ";
+
+/// The plan's item ID of a rewrite.
+#[must_use]
+pub fn rewrite_id(name: &str, content: &str) -> String {
+    format!("{name}{REWRITE_SEP}{content}")
+}
+
+/// Name and answer of a rewrite item ID.
+#[must_use]
+pub fn rewrite_parts(id: &str) -> Option<(&str, &str)> {
+    id.split_once(REWRITE_SEP)
+}
+
+/// The JSON form of a profile that the diff works on: rewrites become
+/// ID-only items, so they are compared like any other list.
+pub(crate) fn comparable(mut v: Value) -> Value {
+    if let Some(list) = v.get_mut("rewrites").and_then(Value::as_array_mut) {
+        for item in list.iter_mut() {
+            let id = rewrite_id(
+                item.get("name").and_then(Value::as_str).unwrap_or_default(),
+                item.get("content")
+                    .and_then(Value::as_str)
+                    .unwrap_or_default(),
+            );
+            *item = serde_json::json!({ "id": id });
+        }
+    }
+    v
+}
 
 /// Who changed what since the last successful apply.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize)]
@@ -283,10 +318,11 @@ pub(crate) fn items(v: Option<&Value>, has_active: bool) -> BTreeMap<String, Opt
 /// yet). Every change starts as [`Origin::Pending`]; see [`classify`].
 #[must_use]
 pub fn diff(desired: &DesiredProfile, live: Option<&Profile>) -> ProfilePlan {
-    let want = serde_json::to_value(&desired.desired).unwrap_or(Value::Null);
-    let have = live
-        .and_then(|l| serde_json::to_value(l).ok())
-        .unwrap_or(Value::Null);
+    let want = comparable(serde_json::to_value(&desired.desired).unwrap_or(Value::Null));
+    let have = comparable(
+        live.and_then(|l| serde_json::to_value(l).ok())
+            .unwrap_or(Value::Null),
+    );
     let ignored = |p: &str| desired.ignore.iter().any(|i| covers(i, p));
     let mut changes = Vec::new();
 
@@ -348,6 +384,13 @@ fn list_changes(
     let canonical = |id: &str| match path {
         "denylist" | "allowlist" => normalize_domain(id).unwrap_or_else(|_| id.to_owned()),
         "security.tlds" => normalize_tld(id),
+        "rewrites" => match rewrite_parts(id) {
+            Some((name, content)) => rewrite_id(
+                &normalize_domain(name).unwrap_or_else(|_| name.to_owned()),
+                content,
+            ),
+            None => id.to_owned(),
+        },
         _ => id.to_owned(),
     };
     let live_by_canonical: BTreeMap<String, (&String, &Option<bool>)> = have
@@ -412,10 +455,12 @@ pub fn classify(
     snapshot: Option<&Value>,
 ) {
     let Some(snap) = snapshot else { return };
-    let want = serde_json::to_value(&desired.desired).unwrap_or(Value::Null);
-    let have = live
-        .and_then(|l| serde_json::to_value(l).ok())
-        .unwrap_or(Value::Null);
+    let snap = &comparable(snap.clone());
+    let want = comparable(serde_json::to_value(&desired.desired).unwrap_or(Value::Null));
+    let have = comparable(
+        live.and_then(|l| serde_json::to_value(l).ok())
+            .unwrap_or(Value::Null),
+    );
     for c in &mut plan.changes {
         let before = probe(snap, c);
         let code_changed = probe(&want, c) != before;

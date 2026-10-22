@@ -20,6 +20,9 @@ path = "src/main.rs"
 default = ["keyring"]
 keyring = ["ndac-core/keyring"]
 age = ["ndac-core/age"]
+# Rewrites and setup information. UNVERIFIED: not in the NextDNS API
+# documentation.
+unstable-endpoints = ["ndac-core/unstable-endpoints"]
 # Builds tests/live_e2e.rs, which talks to the real API (run with --ignored).
 live-e2e = []
 

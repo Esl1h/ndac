@@ -10,7 +10,7 @@ use miette::Report;
 use ndac_api::{Client, Error as ApiError, Profile};
 use ndac_core::{
     auth::{self, SystemEnv},
-    client::api_client,
+    client::{api_client, live_profile},
     config::{DesiredProfile, Workspace},
     plan::{self, Plan, ProfilePlan, RemovedProfile},
     snapshot::{SnapshotKind, SnapshotStore},
@@ -100,7 +100,7 @@ impl<'a> Session<'a> {
         let results = self.rt.block_on(async move {
             let mut set = JoinSet::new();
             for (i, client, id, key) in jobs {
-                set.spawn(async move { (i, key, id.clone(), client.get_profile(&id).await) });
+                set.spawn(async move { (i, key, id.clone(), live_profile(&client, &id).await) });
             }
             let mut out = Vec::new();
             while let Some(r) = set.join_next().await {

@@ -76,6 +76,12 @@ impl WriteBack {
         live: &Profile,
     ) -> Result<(), ImportError> {
         let path = change.path();
+        if path == "rewrites" {
+            return Err(fail(
+                path,
+                "rewrites cannot be written back; edit [rewrites.items] by hand",
+            ));
+        }
         let entry = layers
             .get(target)
             .ok_or_else(|| fail(path, "no such file"))?;

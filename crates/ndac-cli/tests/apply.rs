@@ -117,8 +117,14 @@ async fn init_import_plan_apply_plan() {
     assert!(o.status.success(), "{}{}", out(&o), err(&o));
     assert!(err(&o).contains("applied and verified"), "{}", err(&o));
     let p = format!("/profiles/{id}");
+    // With `unstable-endpoints`, every profile read also reads rewrites.
+    let calls: Vec<String> = api
+        .request_lines()
+        .into_iter()
+        .filter(|l| !l.ends_with("/rewrites"))
+        .collect();
     assert_eq!(
-        api.request_lines(),
+        calls,
         [
             format!("GET {p}"),
             format!("PUT {p}/denylist"),

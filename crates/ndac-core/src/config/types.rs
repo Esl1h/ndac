@@ -209,6 +209,11 @@ pub struct ProfileFile {
     /// Allowed domains.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub allowlist: Option<DomainListConfig>,
+    /// DNS rewrites. UNVERIFIED: the endpoint is not in the NextDNS API
+    /// documentation.
+    #[cfg(feature = "unstable-endpoints")]
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub rewrites: Option<RewritesConfig>,
     /// General settings.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub settings: Option<SettingsConfig>,
@@ -335,6 +340,21 @@ pub struct DomainListConfig {
     /// Domain to active flag.
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub items: Option<ItemMap>,
+}
+
+/// `[rewrites]`: answers NextDNS gives instead of resolving a domain.
+#[cfg(feature = "unstable-endpoints")]
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+pub struct RewritesConfig {
+    /// `authoritative` (default) removes live rewrites absent here; `merge`
+    /// only manages the listed ones. Profiles only.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub mode: Option<ListMode>,
+    /// Domain to answer: an IP address or a hostname. `"$remove"` deletes an
+    /// inherited entry.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub items: Option<BTreeMap<String, String>>,
 }
 
 /// How a list is reconciled.

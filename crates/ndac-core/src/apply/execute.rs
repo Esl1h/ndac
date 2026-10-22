@@ -82,6 +82,10 @@ async fn run(client: &Client, id: Option<&str>, call: &ApiCall) -> Result<Option
             body,
         } => client.patch_item(id, *list, item, body).await,
         ApiCall::DeleteItem { list, id: item } => client.delete_item(id, *list, item).await,
+        #[cfg(feature = "unstable-endpoints")]
+        ApiCall::AddRewrite { name, content } => client.add_rewrite(id, name, content).await,
+        #[cfg(feature = "unstable-endpoints")]
+        ApiCall::DeleteRewrite { name, content } => client.delete_rewrite(id, name, content).await,
     }
     .map(|()| None)
 }

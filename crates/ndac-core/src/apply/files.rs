@@ -105,9 +105,24 @@ fn set<T: Into<toml_edit::Value>>(t: &mut Table, key: &str, v: Option<T>) {
     }
 }
 
+#[cfg(feature = "unstable-endpoints")]
+fn rewrites_table(rewrites: &[ndac_api::Rewrite]) -> Table {
+    let mut items = Table::new();
+    let mut sorted: Vec<_> = rewrites.iter().collect();
+    sorted.sort_by(|a, b| a.name.cmp(&b.name));
+    for r in sorted {
+        items.insert(&r.name, value(r.content.as_str()));
+    }
+    let mut t = Table::new();
+    t.insert("mode", value("authoritative"));
+    t.insert("items", Item::Table(items));
+    t
+}
+
 /// Renders a live profile as a profile file in the canonical layout, so that
 /// `plan` right after `import` is empty. Lists are written authoritative.
 #[must_use]
+#[allow(clippy::too_many_lines, reason = "one block per profile section")]
 pub fn profile_toml(id: &str, live: &Profile) -> String {
     let mut doc = DocumentMut::new();
     doc.insert("id", value(id));
@@ -169,6 +184,10 @@ pub fn profile_toml(id: &str, live: &Profile) -> String {
             t.insert("items", Item::Table(item_table(l)));
             doc.insert(key, Item::Table(t));
         }
+    }
+    #[cfg(feature = "unstable-endpoints")]
+    if let Some(l) = &live.rewrites {
+        doc.insert("rewrites", Item::Table(rewrites_table(l)));
     }
     if let Some(s) = &live.settings {
         let mut t = Table::new();

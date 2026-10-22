@@ -28,6 +28,8 @@ pub const FIELD_PATHS: &[&str] = &[
     "parentalControl.blockBypass",
     "denylist",
     "allowlist",
+    // UNVERIFIED endpoint; only set with the `unstable-endpoints` feature.
+    "rewrites",
     "settings.logs.enabled",
     "settings.logs.drop.ip",
     "settings.logs.drop.domain",

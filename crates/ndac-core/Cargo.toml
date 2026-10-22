@@ -19,6 +19,9 @@ keyring = ["dep:keyring"]
 # `age:` source: decrypts with the `age` binary, so plugins such as
 # age-plugin-yubikey work.
 age = []
+# Rewrites and setup information. UNVERIFIED: not in the NextDNS API
+# documentation.
+unstable-endpoints = ["ndac-api/unstable-endpoints"]
 
 [dependencies]
 dotenvy.workspace = true

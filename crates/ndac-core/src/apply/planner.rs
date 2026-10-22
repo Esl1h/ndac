@@ -71,6 +71,22 @@ pub enum ApiCall {
         /// Item ID.
         id: String,
     },
+    /// `POST` one rewrite. UNVERIFIED endpoint.
+    #[cfg(feature = "unstable-endpoints")]
+    AddRewrite {
+        /// Domain.
+        name: String,
+        /// Answer.
+        content: String,
+    },
+    /// `DELETE` one rewrite, found by name and answer. UNVERIFIED endpoint.
+    #[cfg(feature = "unstable-endpoints")]
+    DeleteRewrite {
+        /// Domain.
+        name: String,
+        /// Answer.
+        content: String,
+    },
 }
 
 #[allow(
@@ -102,6 +118,10 @@ impl ApiCall {
             Self::AddItem { list, .. } => format!("POST {}", list.template()),
             Self::PatchItem { list, .. } => format!("PATCH {}", list.item_template()),
             Self::DeleteItem { list, .. } => format!("DELETE {}", list.item_template()),
+            #[cfg(feature = "unstable-endpoints")]
+            Self::AddRewrite { .. } => "POST /profiles/:profile/rewrites".into(),
+            #[cfg(feature = "unstable-endpoints")]
+            Self::DeleteRewrite { .. } => "DELETE /profiles/:profile/rewrites/:id".into(),
         }
     }
 }
@@ -114,6 +134,7 @@ const ORDER: &[&str] = &[
     "parentalControl",
     "denylist",
     "allowlist",
+    "rewrites",
     "settings",
 ];
 
@@ -184,9 +205,22 @@ pub fn empties_a_list(plan: &ProfilePlan, desired: &DesiredProfile) -> Option<St
 #[must_use]
 pub fn calls(plan: &ProfilePlan, desired: &DesiredProfile) -> Vec<ApiCall> {
     if plan.create {
-        return vec![ApiCall::CreateProfile {
-            body: Box::new(desired.desired.clone()),
+        #[cfg_attr(not(feature = "unstable-endpoints"), allow(unused_mut))]
+        let mut body = desired.desired.clone();
+        // Rewrites have their own endpoint; whether `POST /profiles`
+        // accepts them is unknown.
+        #[cfg(feature = "unstable-endpoints")]
+        let rewrites = body.rewrites.take().unwrap_or_default();
+        #[cfg_attr(not(feature = "unstable-endpoints"), allow(unused_mut))]
+        let mut out = vec![ApiCall::CreateProfile {
+            body: Box::new(body),
         }];
+        #[cfg(feature = "unstable-endpoints")]
+        out.extend(rewrites.into_iter().map(|r| ApiCall::AddRewrite {
+            name: r.name,
+            content: r.content,
+        }));
+        return out;
     }
     let want = serde_json::to_value(&desired.desired).unwrap_or(Value::Null);
 
@@ -240,6 +274,10 @@ pub fn calls(plan: &ProfilePlan, desired: &DesiredProfile) -> Vec<ApiCall> {
                     });
                 }
             }
+            #[cfg(feature = "unstable-endpoints")]
+            Key::List(path) if path == "rewrites" => {
+                out.extend(rewrite_calls(&lists.remove(&path).unwrap_or_default()));
+            }
             Key::List(path) => {
                 let Some(list) = list_path(&path) else {
                     continue;
@@ -258,6 +296,27 @@ pub fn calls(plan: &ProfilePlan, desired: &DesiredProfile) -> Vec<ApiCall> {
         }
     }
     out
+}
+
+/// Removals first: the API keeps one rewrite per name, so a changed
+/// answer must be deleted before the new one is added.
+#[cfg(feature = "unstable-endpoints")]
+fn rewrite_calls(changes: &[&Change]) -> Vec<ApiCall> {
+    use crate::plan::rewrite_parts;
+    let parts = |id: &str| rewrite_parts(id).map(|(n, c)| (n.to_owned(), c.to_owned()));
+    let deletes = changes.iter().filter_map(|c| match c {
+        Change::RemoveItem { id, .. } => {
+            parts(id).map(|(name, content)| ApiCall::DeleteRewrite { name, content })
+        }
+        _ => None,
+    });
+    let adds = changes.iter().filter_map(|c| match c {
+        Change::AddItem { id, .. } => {
+            parts(id).map(|(name, content)| ApiCall::AddRewrite { name, content })
+        }
+        _ => None,
+    });
+    deletes.chain(adds).collect()
 }
 
 enum Key {

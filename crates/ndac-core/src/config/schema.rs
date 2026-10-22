@@ -83,6 +83,9 @@ mod tests {
         ] {
             let path = dir.join(file);
             let expected = json_schema_text(kind);
+            // The committed files describe the default build.
+            #[cfg(feature = "unstable-endpoints")]
+            let expected = without_unstable(&expected);
             if std::env::var_os("UPDATE_SCHEMA").is_some() {
                 fs::create_dir_all(&dir).unwrap();
                 fs::write(&path, &expected).unwrap();
@@ -94,6 +97,20 @@ mod tests {
                 path.display()
             );
         }
+    }
+
+    #[cfg(feature = "unstable-endpoints")]
+    fn without_unstable(text: &str) -> String {
+        let mut v: Value = serde_json::from_str(text).unwrap();
+        if let Some(p) = v["properties"].as_object_mut() {
+            p.remove("rewrites");
+        }
+        if let Some(d) = v["$defs"].as_object_mut() {
+            d.remove("RewritesConfig");
+        }
+        let mut s = serde_json::to_string_pretty(&v).unwrap();
+        s.push('\n');
+        s
     }
 
     #[test]

@@ -18,6 +18,10 @@ use crate::paths;
 /// `"$inherit"` in an ID array expands to the inherited array.
 pub const INHERIT: &str = "$inherit";
 
+/// `"$remove"` as a rewrite answer deletes the inherited rewrite.
+#[cfg(feature = "unstable-endpoints")]
+pub(crate) const REMOVE: &str = "$remove";
+
 #[derive(Clone, Copy)]
 enum Node<'a> {
     Table(&'a Table),
@@ -210,6 +214,15 @@ fn template_only(src: &SourceFile, f: &ProfileFile, out: &mut Vec<ConfigError>) 
             ));
         }
     }
+    #[cfg(feature = "unstable-endpoints")]
+    if f.rewrites.as_ref().is_some_and(|r| r.mode.is_some()) {
+        out.push(src.invalid(
+            src.key_span(&[Seg::Key("rewrites"), Seg::Key("mode")]),
+            "`rewrites.mode` is not allowed in a template",
+            "profiles only",
+            None,
+        ));
+    }
 }
 
 /// `id`, `ignore` and `auth`.
@@ -306,6 +319,10 @@ fn lists(src: &SourceFile, f: &ProfileFile, inherits: bool, out: &mut Vec<Config
             out,
         );
     }
+    #[cfg(feature = "unstable-endpoints")]
+    if let Some(items) = f.rewrites.as_ref().and_then(|r| r.items.as_ref()) {
+        rewrites(src, items, inherits, out);
+    }
     if let Some(r) = f
         .settings
         .as_ref()
@@ -322,6 +339,55 @@ fn lists(src: &SourceFile, f: &ProfileFile, inherits: bool, out: &mut Vec<Config
             ],
             out,
         );
+    }
+}
+
+/// Rewrite names are domains; answers are IP addresses or hostnames.
+#[cfg(feature = "unstable-endpoints")]
+fn rewrites(
+    src: &SourceFile,
+    items: &BTreeMap<String, String>,
+    inherits: bool,
+    out: &mut Vec<ConfigError>,
+) {
+    let key_at = |k: &str| src.key_span(&[Seg::Key("rewrites"), Seg::Key("items"), Seg::Key(k)]);
+    let value_at =
+        |k: &str| src.value_span(&[Seg::Key("rewrites"), Seg::Key("items"), Seg::Key(k)]);
+    let mut normalized: BTreeMap<String, &str> = BTreeMap::new();
+    for (name, answer) in items {
+        match normalize_domain(name) {
+            Ok(norm) => {
+                if let Some(first) = normalized.insert(norm.clone(), name) {
+                    out.push(src.invalid(
+                        key_at(name),
+                        format!("duplicate entry `{norm}` in rewrites.items"),
+                        format!("same as `{first}` after normalization"),
+                        None,
+                    ));
+                }
+            }
+            Err(why) => {
+                let msg = format!("invalid domain {name:?}");
+                out.push(src.invalid(key_at(name), msg, why, None));
+            }
+        }
+        if answer == REMOVE {
+            if !inherits {
+                out.push(src.invalid(
+                    value_at(name),
+                    "`$remove` without `extends`",
+                    "nothing to remove",
+                    Some("only inherited keys can be removed".into()),
+                ));
+            }
+        } else if answer.parse::<std::net::IpAddr>().is_err() && normalize_domain(answer).is_err() {
+            out.push(src.invalid(
+                value_at(name),
+                format!("invalid rewrite answer {answer:?}"),
+                "not an IP address or a hostname",
+                None,
+            ));
+        }
     }
 }
 

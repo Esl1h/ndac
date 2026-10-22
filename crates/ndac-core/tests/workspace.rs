@@ -408,3 +408,62 @@ fn duplicate_profile_stems_are_rejected() {
     ]);
     assert!(out.contains("duplicate profile `casa`"), "{out}");
 }
+
+#[cfg(not(feature = "unstable-endpoints"))]
+#[test]
+fn rewrites_need_the_feature() {
+    let out = errors(&[
+        ("ndac.toml", ROOT),
+        (
+            "profiles/casa.toml",
+            "[rewrites.items]\n\"a.lan\" = \"10.0.0.1\"\n",
+        ),
+    ]);
+    assert!(out.contains("unknown key `rewrites`"), "{out}");
+}
+
+#[cfg(feature = "unstable-endpoints")]
+#[test]
+fn rewrites_merge_and_validate() {
+    let (_dir, root) = workspace(&[
+        ("ndac.toml", ROOT),
+        (
+            "templates/lan.toml",
+            "[rewrites.items]\n\"Router.LAN\" = \"192.168.1.1\"\n\"nas.lan\" = \"192.168.1.2\"\n",
+        ),
+        (
+            "profiles/casa.toml",
+            "extends = [\"lan\"]\n\n[rewrites]\nmode = \"merge\"\n\n[rewrites.items]\n\"nas.lan\" = \"$remove\"\n\"tv.lan\" = \"tv.example.com\"\n",
+        ),
+    ]);
+    let p = Workspace::load(&root).unwrap().resolve("casa").unwrap();
+    let got: Vec<(&str, &str)> = p
+        .desired
+        .rewrites
+        .as_deref()
+        .unwrap()
+        .iter()
+        .map(|r| (r.name.as_str(), r.content.as_str()))
+        .collect();
+    assert_eq!(
+        got,
+        [("router.lan", "192.168.1.1"), ("tv.lan", "tv.example.com")]
+    );
+    assert_eq!(p.list_modes.get("rewrites"), Some(&ListMode::Merge));
+
+    let out = errors(&[
+        ("ndac.toml", ROOT),
+        ("templates/t.toml", "[rewrites]\nmode = \"merge\"\n"),
+        (
+            "profiles/casa.toml",
+            "[rewrites.items]\n\"a.lan\" = \"not an answer\"\n\"b.lan\" = \"$remove\"\n\"bad name\" = \"10.0.0.1\"\n",
+        ),
+    ]);
+    assert!(
+        out.contains("`rewrites.mode` is not allowed in a template"),
+        "{out}"
+    );
+    assert!(out.contains("invalid rewrite answer"), "{out}");
+    assert!(out.contains("`$remove` without `extends`"), "{out}");
+    assert!(out.contains("invalid domain \"bad name\""), "{out}");
+}

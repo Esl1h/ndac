@@ -5,6 +5,7 @@ use std::{collections::BTreeMap, fs, path::PathBuf};
 use miette::Report;
 use ndac_core::{
     apply::{profile_toml, slug},
+    client::live_profile,
     config::Workspace,
     snapshot::SnapshotKind,
 };
@@ -58,7 +59,7 @@ pub(crate) fn run(
     for id in targets {
         let live = session
             .rt
-            .block_on(client.get_profile(&id))
+            .block_on(live_profile(&client, &id))
             .map_err(Failure::api)?;
         let path = if let Some(p) = existing.get(&id) {
             p.clone()
