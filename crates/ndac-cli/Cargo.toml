@@ -55,6 +55,7 @@ workspace = true
 # (packaging/scripts/assets.sh). The systemd units are installed but not
 # enabled.
 [package.metadata.deb]
+maintainer = "Esli Silva <not.announced@simplelogin.fr>"
 section = "net"
 priority = "optional"
 extended-description = """\
