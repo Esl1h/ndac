@@ -33,3 +33,15 @@ updates:
       actions-security:
         applies-to: security-updates
         patterns: ["*"]
+
+  # Base image digest of packaging/container/Dockerfile. Dependabot does
+  # not look inside workflow `docker run` lines (packaging.yml), so that
+  # digest is updated by hand.
+  - package-ecosystem: docker
+    directory: /packaging/container
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
+    commit-message:
+      prefix: build
