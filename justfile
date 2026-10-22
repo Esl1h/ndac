@@ -1,5 +1,4 @@
 # Developer tasks. Run `just --list` for a summary.
-# Recipes for fuzz and e2e are added in the phase that introduces them.
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
 
@@ -51,6 +50,13 @@ release-dry:
     packaging/scripts/archive.sh "$(cargo pkgid -p ndac | sed 's/.*[#@]//')" \
         "$(rustc -vV | sed -n 's/^host: //p')" target/release/ndac target/assets target/dist
     cd target/dist && sha256sum -- * > SHA256SUMS && cat SHA256SUMS
+
+# Run each fuzz target for SECONDS (nightly and cargo-fuzz required)
+fuzz seconds="60":
+    cd fuzz && for t in $(cargo +nightly fuzz list); do \
+        mkdir -p "corpus/$t" && \
+        cargo +nightly fuzz run "$t" "corpus/$t" "seeds/$t" -- -max_total_time={{seconds}}; \
+    done
 
 # Live test against a throwaway NextDNS profile; needs NEXTDNS_E2E_API_KEY
 # and NEXTDNS_E2E_PROFILE_ID

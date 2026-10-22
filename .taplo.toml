@@ -1,6 +1,7 @@
 include = ["**/*.toml"]
-# examples/ follows `ndac fmt`, which aligns `=`.
-exclude = ["target/**", "fuzz/target/**", "examples/**"]
+# examples/ follows `ndac fmt`, which aligns `=`; fuzz seeds are not
+# always valid TOML.
+exclude = ["target/**", "fuzz/target/**", "fuzz/seeds/**", "examples/**"]
 
 [formatting]
 indent_string = "  "
