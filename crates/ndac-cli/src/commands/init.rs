@@ -8,7 +8,7 @@ use super::{CmdResult, Failure};
 use crate::output::{Exit, Output};
 
 const ROOT: &str = r#"schema  = 1
-include = ["templates/*.toml", "profiles/*.toml"]
+include = ["profiles/*.toml", "templates/*.toml"]
 
 [provider]
 timeout       = "15s"
