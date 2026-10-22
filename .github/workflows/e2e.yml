@@ -1,0 +1,44 @@
+name: E2E
+
+# Live end-to-end test against a dedicated throwaway NextDNS profile
+# (crates/ndac-cli/tests/live_e2e.rs). Never runs on pull requests. The
+# `nextdns-e2e` environment has required reviewers and holds the secrets
+# NEXTDNS_E2E_API_KEY and NEXTDNS_E2E_PROFILE_ID.
+
+on:
+  schedule:
+    - cron: "23 5 * * 2"
+  workflow_dispatch:
+
+permissions: {}
+
+concurrency:
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
+
+jobs:
+  e2e:
+    name: live e2e
+    if: github.repository == 'Esl1h/ndac'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    environment: nextdns-e2e
+    permissions:
+      contents: read
+    steps:
+      - uses: step-security/harden-runner@dc2769abcc0fcfbadfc1df54081c1608579ef6b2 # v2.22.2
+        with:
+          egress-policy: audit
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@683b588c487a69d01f6c6ddf40f036ff682cc2c8 # master
+        with:
+          toolchain: stable
+      - name: Live test
+        env:
+          NEXTDNS_E2E_API_KEY: ${{ secrets.NEXTDNS_E2E_API_KEY }}
+          NEXTDNS_E2E_PROFILE_ID: ${{ secrets.NEXTDNS_E2E_PROFILE_ID }}
+        run: |
+          test -n "$NEXTDNS_E2E_API_KEY" && test -n "$NEXTDNS_E2E_PROFILE_ID"
+          cargo test -p ndac --features live-e2e --test live_e2e --locked -- --ignored
