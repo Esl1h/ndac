@@ -1,0 +1,32 @@
+# Maintainer: Esli Silva
+#
+# Template for the AUR package ndac-bin. packaging.yml sets pkgver and the
+# checksums from each GitHub release before pushing to the AUR.
+
+pkgname=ndac-bin
+pkgver=0.0.0
+pkgrel=1
+pkgdesc='NextDNS-as-Code: manage NextDNS profiles declaratively from TOML files'
+arch=('x86_64' 'aarch64')
+url='https://github.com/Esl1h/ndac'
+license=('MIT OR Apache-2.0')
+provides=('ndac')
+conflicts=('ndac')
+options=('!debug' '!strip')
+source_x86_64=("$url/releases/download/v$pkgver/ndac-$pkgver-x86_64-unknown-linux-musl.tar.gz")
+source_aarch64=("$url/releases/download/v$pkgver/ndac-$pkgver-aarch64-unknown-linux-musl.tar.gz")
+sha256sums_x86_64=('0000000000000000000000000000000000000000000000000000000000000000')
+sha256sums_aarch64=('0000000000000000000000000000000000000000000000000000000000000000')
+
+package() {
+  cd "ndac-$pkgver-$CARCH-unknown-linux-musl"
+  install -Dm755 ndac "$pkgdir/usr/bin/ndac"
+  install -Dm644 completions/ndac.bash "$pkgdir/usr/share/bash-completion/completions/ndac"
+  install -Dm644 completions/_ndac "$pkgdir/usr/share/zsh/site-functions/_ndac"
+  install -Dm644 completions/ndac.fish "$pkgdir/usr/share/fish/vendor_completions.d/ndac.fish"
+  install -Dm644 man/ndac.1 "$pkgdir/usr/share/man/man1/ndac.1"
+  install -Dm644 systemd/ndac-drift.service "$pkgdir/usr/lib/systemd/system/ndac-drift.service"
+  install -Dm644 systemd/ndac-drift.timer "$pkgdir/usr/lib/systemd/system/ndac-drift.timer"
+  install -Dm644 -t "$pkgdir/usr/share/licenses/$pkgname/" LICENSE-MIT LICENSE-APACHE
+  install -Dm644 -t "$pkgdir/usr/share/doc/$pkgname/" README.md CHANGELOG.md
+}
