@@ -194,6 +194,10 @@ pub(crate) enum Command {
         /// Directory to initialize.
         #[arg(default_value = ".")]
         dir: std::path::PathBuf,
+        /// Also write a GitHub Actions workflow: plan on pull requests,
+        /// apply on main, daily drift check.
+        #[arg(long)]
+        github_actions: bool,
     },
 
     /// Print configuration for devices and resolvers. Never installs

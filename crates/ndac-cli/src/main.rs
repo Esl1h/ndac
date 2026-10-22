@@ -97,7 +97,10 @@ fn dispatch(cli: Cli, out: Output) -> commands::CmdResult {
             all,
             force,
         } => commands::import::run(&cli.global, &profiles, all, force, out),
-        Command::Init { dir } => commands::init::run(&dir, out),
+        Command::Init {
+            dir,
+            github_actions,
+        } => commands::init::run(&dir, github_actions, out),
         Command::Endpoint(EndpointCommand::Render {
             profile,
             target,

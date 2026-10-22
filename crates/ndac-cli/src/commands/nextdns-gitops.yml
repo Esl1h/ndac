@@ -1,0 +1,185 @@
+# NextDNS GitOps with ndac. Copy to .github/workflows/ in a configuration
+# repository (`ndac init --github-actions` writes it there).
+#
+# - Pull request: `ndac plan` posted as a PR comment, updated on every push.
+# - Push to main: `ndac apply --auto-approve` in the protected environment
+#   `nextdns` (add required reviewers to approve each apply).
+# - Daily: `ndac drift`; on drift, opens or updates an issue labelled
+#   `nextdns-drift`.
+#
+# Setup:
+# - Environments `nextdns-plan` and `nextdns`, each with the secret
+#   NEXTDNS_API_KEY. The key can read and change the whole account, so
+#   restrict `nextdns-plan` to the default branch and pull requests from
+#   this repository, and `nextdns` to main with required reviewers. Fork
+#   pull requests never get the key and are not planned.
+# - Instead of a stored key, a job can fetch it with OIDC from a secrets
+#   manager, for example `aws-actions/configure-aws-credentials` followed by
+#   `aws secretsmanager get-secret-value --query SecretString --output text
+#   > "$RUNNER_TEMP/key"` and `NDAC_AUTH_SOURCE: file:${{ runner.temp }}/key`,
+#   or `hashicorp/vault-action` with JWT auth.
+# - Drift detection compares against the snapshot taken after the last
+#   apply. The apply job keeps .ndac/snapshots as the artifact
+#   `ndac-snapshots`, and later jobs download the newest one, so drift is
+#   only reported after a first apply from this workflow. Artifacts are
+#   readable by anyone with read access to the repository.
+# - Pin NDAC_VERSION; Dependabot does not update it.
+
+name: NextDNS
+
+on:
+  pull_request:
+    paths: ["ndac.toml", "templates/**", "profiles/**"]
+  push:
+    branches: [main]
+    paths: ["ndac.toml", "templates/**", "profiles/**"]
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions: {}
+
+env:
+  NDAC_VERSION: "0.1.0"
+  NO_COLOR: "1"
+
+jobs:
+  plan:
+    if: >-
+      github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: nextdns-plan
+    permissions:
+      contents: read
+      pull-requests: write
+    concurrency:
+      group: nextdns-plan-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install ndac
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: &install |
+          name="ndac-$NDAC_VERSION-x86_64-unknown-linux-musl"
+          cd "$RUNNER_TEMP"
+          gh release download "v$NDAC_VERSION" --repo Esl1h/ndac \
+            --pattern "$name.tar.gz" --pattern SHA256SUMS
+          sha256sum --check --ignore-missing --strict SHA256SUMS
+          gh attestation verify "$name.tar.gz" --repo Esl1h/ndac
+          tar -xzf "$name.tar.gz"
+          echo "$RUNNER_TEMP/$name" >> "$GITHUB_PATH"
+      - name: Plan
+        env:
+          NEXTDNS_API_KEY: ${{ secrets.NEXTDNS_API_KEY }}
+        run: |
+          rc=0
+          ndac plan --format markdown --detailed-exitcode > "$RUNNER_TEMP/plan.md" || rc=$?
+          # 0: no changes, 2: changes; anything else is an error.
+          test "$rc" -eq 0 || test "$rc" -eq 2
+      - name: Comment
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR: ${{ github.event.pull_request.number }}
+        run: |
+          gh pr comment "$PR" --repo "$GITHUB_REPOSITORY" \
+            --edit-last --create-if-none --body-file "$RUNNER_TEMP/plan.md"
+
+  apply:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment: nextdns
+    permissions:
+      contents: read
+      actions: read
+    concurrency:
+      group: nextdns-apply
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install ndac
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: *install
+      # Carry earlier snapshots forward: an apply without changes takes none.
+      - name: Restore snapshots
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: &restore |
+          # Newest snapshots kept by a successful apply run of this workflow.
+          wf="${GITHUB_WORKFLOW_REF%@*}"
+          for run in $(gh run list --repo "$GITHUB_REPOSITORY" --workflow "${wf##*/}" \
+              --branch main --status success --limit 20 --json databaseId,event \
+              --jq '.[] | select(.event == "push" or .event == "workflow_dispatch") | .databaseId'); do
+            if gh run download "$run" --repo "$GITHUB_REPOSITORY" \
+                --name ndac-snapshots --dir .ndac/snapshots; then
+              break
+            fi
+          done
+      - name: Apply
+        env:
+          NEXTDNS_API_KEY: ${{ secrets.NEXTDNS_API_KEY }}
+        run: ndac apply --auto-approve
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: always()
+        with:
+          name: ndac-snapshots
+          path: .ndac/snapshots/
+          if-no-files-found: ignore
+          retention-days: 90
+
+  drift:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: nextdns-plan
+    permissions:
+      contents: read
+      actions: read
+      issues: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Install ndac
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: *install
+      - name: Restore snapshots
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: *restore
+      - name: Drift
+        id: drift
+        env:
+          NEXTDNS_API_KEY: ${{ secrets.NEXTDNS_API_KEY }}
+        run: |
+          rc=0
+          ndac drift --format github > "$RUNNER_TEMP/drift.txt" || rc=$?
+          cat "$RUNNER_TEMP/drift.txt"
+          test "$rc" -eq 0 || test "$rc" -eq 2
+          echo "drift=$([ "$rc" -eq 2 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
+      - name: Open or update the drift issue
+        if: steps.drift.outputs.drift == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          body="Drift found by $RUN_URL. Run \`ndac plan\` locally, then \`ndac reconcile\` or \`ndac apply\`."
+          issue=$(gh issue list --repo "$GITHUB_REPOSITORY" --label nextdns-drift \
+            --state open --limit 1 --json number --jq '.[0].number // empty')
+          if [ -n "$issue" ]; then
+            gh issue comment "$issue" --repo "$GITHUB_REPOSITORY" --body "$body"
+          else
+            gh label create nextdns-drift --repo "$GITHUB_REPOSITORY" --force \
+              --description "Live NextDNS profile differs from the configuration"
+            gh issue create --repo "$GITHUB_REPOSITORY" --label nextdns-drift \
+              --title "NextDNS drift" --body "$body"
+          fi

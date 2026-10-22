@@ -1,7 +1,8 @@
-//! The configurations under `examples/` stay valid and formatted.
+//! The configurations under `examples/` stay valid and formatted, and
+//! `ndac init --github-actions` writes the published workflow example.
 #![allow(clippy::unwrap_used, reason = "tests")]
 
-use std::path::{Path, PathBuf};
+use std::{fs, path::Path, path::PathBuf};
 
 use assert_cmd::Command;
 
@@ -24,4 +25,22 @@ fn examples_are_valid_and_formatted() {
         ndac(&dir).arg("validate").assert().success();
         ndac(&dir).args(["fmt", "--check"]).assert().success();
     }
+}
+
+#[test]
+fn init_writes_the_github_workflow() {
+    let dir = tempfile::tempdir().unwrap();
+    ndac(dir.path()).arg("init").assert().success();
+    assert!(!dir.path().join(".github").exists());
+    ndac(dir.path()).args(["fmt", "--check"]).assert().success();
+
+    ndac(dir.path())
+        .args(["init", "--github-actions"])
+        .assert()
+        .success();
+    let written =
+        fs::read_to_string(dir.path().join(".github/workflows/nextdns-gitops.yml")).unwrap();
+    let published =
+        fs::read_to_string(examples().join("github-actions/nextdns-gitops.yml")).unwrap();
+    assert_eq!(written, published);
 }

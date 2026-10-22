@@ -72,8 +72,9 @@ patterns.
   a flag between calls.
 - The lock is advisory and per checkout: two checkouts of the same
   repository can still apply concurrently.
-- `ndac init` does not write a CI workflow yet; the GitHub Actions example
-  is added with the documentation phase.
+- The workflow written by `ndac init --github-actions` keeps snapshots as
+  workflow artifacts, which expire (90 days by default). With no apply in
+  that time, drift is no longer detected until the next apply.
 - After a partial apply (`--target`, or `reconcile` overwriting only some
   items), the `post-apply` snapshot records the whole live profile. Drift
   left untouched then shows as pending instead of drift, until the next full

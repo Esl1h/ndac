@@ -56,6 +56,9 @@ include = ["templates/*.toml", "profiles/*.toml"]
 path = "https://raw.githubusercontent.com/Esl1h/ndac/main/schema/ndac-profile.schema.json"
 "#;
 
+/// Also published as `examples/github-actions/nextdns-gitops.yml`.
+const GITHUB_WORKFLOW: &str = include_str!("nextdns-gitops.yml");
+
 const IGNORE: &[&str] = &["ndac.local.toml", ".env", ".ndac/"];
 
 fn other(msg: impl Into<String>) -> Failure {
@@ -77,13 +80,21 @@ fn write_new(dir: &Path, rel: &str, text: &str, out: Output) -> Result<(), Failu
     Ok(())
 }
 
-pub(crate) fn run(dir: &Path, out: Output) -> CmdResult {
+pub(crate) fn run(dir: &Path, github_actions: bool, out: Output) -> CmdResult {
     fs::create_dir_all(dir).map_err(|e| other(format!("cannot create {}: {e}", dir.display())))?;
     write_new(dir, "ndac.toml", ROOT, out)?;
     write_new(dir, "templates/base.toml", BASE, out)?;
     write_new(dir, ".taplo.toml", TAPLO, out)?;
     fs::create_dir_all(dir.join("profiles"))
         .map_err(|e| other(format!("cannot create profiles/: {e}")))?;
+    if github_actions {
+        write_new(
+            dir,
+            ".github/workflows/nextdns-gitops.yml",
+            GITHUB_WORKFLOW,
+            out,
+        )?;
+    }
 
     let gi = dir.join(".gitignore");
     let current = fs::read_to_string(&gi).unwrap_or_default();
