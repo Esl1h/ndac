@@ -3,7 +3,7 @@ resolver = "3"
 members = ["crates/*"]
 
 [workspace.package]
-version = "0.0.0"
+version = "0.1.0"
 edition = "2024"
 # Floor set by keyring 4, proptest 1.12 and time 0.3.55 (all 1.88); 1.89 adds
 # headroom and is what the msrv CI job tests.
@@ -16,8 +16,8 @@ keywords = ["nextdns", "dns", "gitops", "infrastructure-as-code", "cli"]
 categories = ["command-line-utilities", "network-programming"]
 
 [workspace.dependencies]
-ndac-api = { path = "crates/ndac-api", version = "0.0.0" }
-ndac-core = { path = "crates/ndac-core", version = "0.0.0", default-features = false }
+ndac-api = { path = "crates/ndac-api", version = "0.1.0" }
+ndac-core = { path = "crates/ndac-core", version = "0.1.0", default-features = false }
 ndac-testkit = { path = "crates/ndac-testkit" }
 
 assert_cmd = "2.2.2"
