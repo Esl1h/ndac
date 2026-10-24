@@ -29,7 +29,7 @@ The musl builds are static and run on any Linux distribution. See
 - Debian and Ubuntu: `sudo apt install ./ndac_0.1.0-1_amd64.deb`
 - Fedora and RHEL: `sudo dnf install ./ndac-0.1.0-1.x86_64.rpm`, or from the
   COPR repository when it is enabled
-- Arch Linux: the AUR package `ndac-bin`
+- Arch Linux: the AUR package `ndac-bin`, when it is published
 - From source: `cargo install --locked ndac`
 
 Packages install the binary, completions, the man page and the systemd
