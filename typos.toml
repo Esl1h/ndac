@@ -1,6 +1,7 @@
 [files]
 extend-exclude = [
   "LICENSE-*",
+  "LICENSES/*",
   "**/tests/fixtures/**",
   "**/tests/snapshots/**",
   "schema/*.json",
