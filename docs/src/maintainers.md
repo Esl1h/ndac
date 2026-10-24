@@ -46,7 +46,8 @@ Releases are cut by merging the pull request that release-plz keeps open on
 3. The tag starts `release.yml`: binaries for six targets built with
    `cargo auditable`, archives with completions, the man page and the systemd
    units, `.deb` and `.rpm` packages, a CycloneDX SBOM, `SHA256SUMS` signed
-   with cosign, build provenance attestations, and the image
+   with cosign, build provenance attestations (also attached as
+   `ndac-X.Y.Z.intoto.jsonl`), and the image
    `ghcr.io/esl1h/ndac` (signed, with SBOM and provenance). The draft release
    is published once every asset is uploaded, so it also works with immutable
    releases.
