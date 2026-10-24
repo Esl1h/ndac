@@ -60,6 +60,11 @@ For automation, `--non-interactive --prefer live` imports everything and
 `--non-interactive --prefer code` overwrites everything. Without a terminal,
 `--prefer` is required. `--target` limits reconcile like `plan`.
 
+Overwriting goes through the same guard as `apply`: if it would remove every
+item of an authoritative list, for example an item added in the dashboard to
+a list the configuration keeps empty, `reconcile` stops and nothing is
+changed. Pass `--allow-destroy` if that is intended.
+
 ### Writing into the configuration
 
 Imports edit one key, array element or item at a time with `toml_edit`, so

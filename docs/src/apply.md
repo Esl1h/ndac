@@ -40,7 +40,8 @@ Profiles are applied concurrently; calls within a profile are sequential.
 ### Safety
 
 - **Destroy guard**: emptying an authoritative list, and deleting a profile
-  whose file was removed, require `--allow-destroy`.
+  whose file was removed, require `--allow-destroy` (also accepted by
+  `reconcile`, which overwrites through the same steps).
 - **Lock**: `.ndac/snapshots/.lock` prevents two applies from the same
   checkout at once.
 - **Ctrl-C**: the request in flight finishes, no new request starts, the

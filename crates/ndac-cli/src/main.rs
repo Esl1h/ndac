@@ -69,12 +69,14 @@ fn dispatch(cli: Cli, out: Output) -> commands::CmdResult {
             prefer,
             non_interactive,
             no_comment,
+            allow_destroy,
         } => commands::reconcile::run(
             &cli.global,
             &targets,
             prefer,
             non_interactive,
             no_comment,
+            allow_destroy,
             out,
         ),
         Command::Apply {

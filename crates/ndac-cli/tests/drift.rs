@@ -40,12 +40,26 @@ fn err(o: &Output) -> String {
 /// An imported profile `casa`, then a dashboard edit: one denylist item
 /// added and `web3` turned on.
 async fn drifted() -> (FakeApi, TempDir, String) {
-    let api = FakeApi::start().await.unwrap();
-    let id = api.insert_profile(&json!({
+    let (api, dir, id) = imported(json!({
         "name": "Casa",
         "denylist": [{ "id": "foo.example", "active": true }],
         "settings": { "web3": false }
+    }))
+    .await;
+    assert!(api.edit_profile(&id, |p| {
+        p["denylist"]
+            .as_array_mut()
+            .unwrap()
+            .push(json!({ "id": "bar.example", "active": true }));
+        p["settings"]["web3"] = json!(true);
     }));
+    (api, dir, id)
+}
+
+/// `profile`, imported as `casa`, with no drift yet.
+async fn imported(profile: serde_json::Value) -> (FakeApi, TempDir, String) {
+    let api = FakeApi::start().await.unwrap();
+    let id = api.insert_profile(&profile);
     let dir = tempfile::tempdir().unwrap();
     ndac(dir.path()).arg("init").assert().success();
     let root = dir.path().join("ndac.toml");
@@ -63,14 +77,6 @@ async fn drifted() -> (FakeApi, TempDir, String) {
     let o = run(dir.path(), &["drift"]).await;
     assert_eq!(o.status.code(), Some(0), "{}", err(&o));
     assert!(out(&o).contains("No drift"), "{}", out(&o));
-
-    assert!(api.edit_profile(&id, |p| {
-        p["denylist"]
-            .as_array_mut()
-            .unwrap()
-            .push(json!({ "id": "bar.example", "active": true }));
-        p["settings"]["web3"] = json!(true);
-    }));
     (api, dir, id)
 }
 
@@ -195,4 +201,34 @@ async fn reconcile_needs_a_terminal_or_prefer() {
     let o = run(dir.path(), &["reconcile", "--non-interactive"]).await;
     assert_eq!(o.status.code(), Some(1));
     assert!(err(&o).contains("--prefer"), "{}", err(&o));
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn reconcile_prefer_code_empties_a_list_only_with_allow_destroy() {
+    let (api, dir, id) = imported(json!({ "name": "Casa", "allowlist": [] })).await;
+    assert!(api.edit_profile(&id, |p| {
+        p["allowlist"] = json!([{ "id": "new.example", "active": true }]);
+    }));
+    let args = ["reconcile", "--non-interactive", "--prefer", "code"];
+
+    let o = run(dir.path(), &args).await;
+    assert_eq!(o.status.code(), Some(1), "{}", err(&o));
+    assert!(
+        err(&o).contains("remove every item of `allowlist`"),
+        "{}",
+        err(&o)
+    );
+    assert_eq!(
+        api.profile(&id).unwrap()["allowlist"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+
+    let o = run(dir.path(), &[&args[..], &["--allow-destroy"]].concat()).await;
+    assert!(o.status.success(), "{}{}", out(&o), err(&o));
+    assert_eq!(api.profile(&id).unwrap()["allowlist"], json!([]));
+    let (code, text) = plan_exit(dir.path()).await;
+    assert_eq!(code, Some(0), "{text}");
 }
