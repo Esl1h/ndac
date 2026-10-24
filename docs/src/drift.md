@@ -63,7 +63,9 @@ For automation, `--non-interactive --prefer live` imports everything and
 ### Writing into the configuration
 
 Imports edit one key, array element or item at a time with `toml_edit`, so
-comments, key order and whitespace are kept. Each edited line gets a trailing
+comments, key order and whitespace are kept. A file that `ndac fmt` had
+already formatted is formatted again after the edit, so `ndac fmt --check`
+keeps passing; other files keep their layout. Each edited line gets a trailing
 comment such as `# imported 2026-10-21 (drift)`, unless the line already has
 a comment or `--no-comment` is given. Comments cannot go inside inline
 tables, so values there are written without one.

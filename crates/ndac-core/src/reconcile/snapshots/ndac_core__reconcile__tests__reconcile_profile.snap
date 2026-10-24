@@ -21,7 +21,7 @@ mode = "authoritative"
 tlds = ["$inherit", "ru"] # imported 2026-10-21 (drift)
 
 [privacy]
-blocklists = ["oisd"] # imported 2026-10-21 (drift)
+blocklists        = ["oisd"] # imported 2026-10-21 (drift)
 disguisedTrackers = false # imported 2026-10-21 (drift)
 
 [parentalControl.services]

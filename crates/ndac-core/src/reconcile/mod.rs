@@ -1,8 +1,9 @@
 //! Reconcile write-back: importing live values into configuration files.
 //!
 //! Each import edits a single key, array element or item with `toml_edit`,
-//! so comments, ordering and whitespace survive. Edits are kept in memory
-//! until [`WriteBack::write`].
+//! so comments, ordering and whitespace survive; files that were canonically
+//! formatted are formatted again. Edits are kept in memory until
+//! [`WriteBack::write`].
 
 use std::{
     collections::BTreeMap,
@@ -16,7 +17,9 @@ use toml_edit::{Array, DocumentMut, InlineTable, Item, Table, TableLike, Value a
 
 use crate::{
     apply::{duration, replace_preserving},
-    config::{DesiredProfile, Entry, INHERIT, fold_layers, merge_ids, normalize_domain},
+    config::{
+        DesiredProfile, Entry, INHERIT, fold_layers, format_toml, merge_ids, normalize_domain,
+    },
     plan::{Change, Origin, get, is_list, items},
 };
 
@@ -130,12 +133,21 @@ impl WriteBack {
             .ok_or_else(|| "internal: document missing".to_owned())
     }
 
-    /// Changed files and their new text.
+    /// Changed files and their new text. A file that was canonically
+    /// formatted stays so, or `ndac fmt --check` would fail after every
+    /// reconcile; other files keep their layout.
     #[must_use]
     pub fn changed(&self) -> Vec<(&Path, String)> {
         self.docs
             .iter()
-            .map(|(p, (orig, doc))| (p.as_path(), orig, doc.to_string()))
+            .map(|(p, (orig, doc))| {
+                let new = doc.to_string();
+                let new = match format_toml(orig) {
+                    Ok(f) if f == *orig => format_toml(&new).unwrap_or(new),
+                    _ => new,
+                };
+                (p.as_path(), orig, new)
+            })
             .filter(|(_, orig, new)| *orig != new)
             .map(|(p, _, new)| (p, new))
             .collect()
