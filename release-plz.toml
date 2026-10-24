@@ -72,3 +72,6 @@ git_release_enable = false
 [[package]]
 name = "ndac-testkit"
 release = false
+# Must match `publish = false` in its Cargo.toml, or `release-plz release`
+# refuses to run.
+publish = false
