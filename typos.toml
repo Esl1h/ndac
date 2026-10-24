@@ -16,3 +16,5 @@ bse = "bse"
 privcy = "privcy"
 # Prompt shortcuts such as "[i]mport" and "[o]verwrite".
 mport = "mport"
+# The in-toto attestation file suffix, `.intoto.jsonl`.
+intoto = "intoto"
