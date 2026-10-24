@@ -163,6 +163,9 @@ pub(crate) enum Command {
         /// Do not add `# imported <date> (drift)` comments to edited lines.
         #[arg(long)]
         no_comment: bool,
+        /// Allow overwrites that empty authoritative lists.
+        #[arg(long)]
+        allow_destroy: bool,
     },
 
     /// Write live profiles to TOML files under profiles/.

@@ -233,6 +233,7 @@ pub(crate) fn run(
     prefer: Option<Prefer>,
     non_interactive: bool,
     no_comment: bool,
+    allow_destroy: bool,
     out: Output,
 ) -> CmdResult {
     let tty = io::stdin().is_terminal();
@@ -306,7 +307,7 @@ pub(crate) fn run(
         // Choosing "overwrite" per item is the confirmation.
         let opts = Options {
             auto_approve: true,
-            allow_destroy: false,
+            allow_destroy,
             write_back: false,
         };
         exit = engine::run(&mut session, work, Vec::new(), &opts, out)?;
