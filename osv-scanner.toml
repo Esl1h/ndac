@@ -1,0 +1,24 @@
+# OSV-Scanner configuration, also read by the OpenSSF Scorecard
+# Vulnerabilities check. https://google.github.io/osv-scanner/configuration/
+#
+# Only "unmaintained" notices for transitive crates are ignored here, the
+# same scope deny.toml leaves out (`unmaintained = "workspace"`). Each entry
+# expires so it is revisited.
+
+# zvariant, zbus_names and zvariant_derive were merged into zbus 6. They come
+# in through keyring -> zbus-secret-service-keyring-store -> secret-service ->
+# zbus 5; they go away once secret-service moves to zbus 6.
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0370"
+ignoreUntil = 2027-04-24T00:00:00Z
+reason = "zvariant unmaintained (merged into zbus 6); transitive via secret-service"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0371"
+ignoreUntil = 2027-04-24T00:00:00Z
+reason = "zbus_names unmaintained (merged into zbus 6); transitive via secret-service"
+
+[[IgnoredVulns]]
+id = "RUSTSEC-2026-0372"
+ignoreUntil = 2027-04-24T00:00:00Z
+reason = "zvariant_derive unmaintained (merged into zbus 6); transitive via secret-service"
