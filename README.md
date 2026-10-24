@@ -17,8 +17,8 @@ profiles, every apply is verified and snapshotted first, and a scheduled
 `ndac` is an independent project. It is not made, endorsed or supported by
 NextDNS Inc.; "NextDNS" is used only to describe what the tool works with.
 
-> **Status:** pre-release. The configuration format and the crate APIs may
-> still change before 1.0.
+> **Status:** 0.1.0 is the first release. The configuration format and the
+> crate APIs may still change before 1.0.
 
 ## Quickstart
 
@@ -68,9 +68,9 @@ See [Authentication](https://esl1h.github.io/ndac/authentication.html).
 
 ## Installation
 
-Release archives for Linux and macOS, `.deb` and `.rpm` packages, the AUR
-package `ndac-bin`, and the container image `ghcr.io/esl1h/ndac` are listed
-in [Installation](https://esl1h.github.io/ndac/installation.html). From
+Release archives for Linux and macOS, `.deb` and `.rpm` packages, and the
+container image `ghcr.io/esl1h/ndac` are listed in
+[Installation](https://esl1h.github.io/ndac/installation.html). From
 source: `cargo install --locked ndac`.
 
 Every release file has build provenance, and `SHA256SUMS` is signed with
