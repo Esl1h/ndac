@@ -183,3 +183,22 @@ fn unset_live_field_inherited_from_a_template_is_an_error() {
     let err = wb.import(&layers, layers.len() - 1, c, &live).unwrap_err();
     assert!(err.reason.contains("template sets it"), "{err}");
 }
+
+#[test]
+fn canonical_files_stay_canonical() {
+    let casa = crate::config::format_toml(CASA).unwrap();
+    let (dir, ws) = workspace(&casa);
+    let _ = import_all(&dir, &ws, Some("imported 2026-10-21"), |l, _| l.len() - 1);
+    let after = fs::read_to_string(dir.path().join("profiles/casa.toml")).unwrap();
+    assert_eq!(crate::config::format_toml(&after).unwrap(), after);
+}
+
+#[test]
+fn other_files_are_not_reformatted() {
+    let casa = CASA.replace("id      =", "id =");
+    assert_ne!(crate::config::format_toml(&casa).unwrap(), casa);
+    let (dir, ws) = workspace(&casa);
+    let _ = import_all(&dir, &ws, None, |l, _| l.len() - 1);
+    let after = fs::read_to_string(dir.path().join("profiles/casa.toml")).unwrap();
+    assert!(after.starts_with("# Casa\nid = \"abc123\"\n"), "{after}");
+}
