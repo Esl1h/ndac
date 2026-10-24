@@ -12,7 +12,7 @@ license = "MIT OR Apache-2.0"
 repository = "https://github.com/Esl1h/ndac"
 homepage = "https://github.com/Esl1h/ndac"
 authors = ["Esli Silva"]
-keywords = ["nextdns", "dns", "gitops", "infrastructure-as-code", "cli"]
+keywords = ["nextdns", "dns", "gitops", "iac", "cli"]
 categories = ["command-line-utilities", "network-programming"]
 
 [workspace.dependencies]
