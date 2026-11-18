@@ -9,7 +9,10 @@ use miette::Report;
 use ndac_core::{
     auth::{self, Probe, SystemEnv},
     client::api_client,
-    config::{LOCAL_FILE, Workspace},
+    config::{
+        LOCAL_FILE, Workspace,
+        types::{AuthConfig, ProviderConfig},
+    },
 };
 
 use super::{CmdResult, Failure, cwd, load, root_path, runtime, user_agent};
@@ -30,23 +33,40 @@ fn check_profile(ws: &Workspace, profile: Option<&str>) -> Result<(), Failure> {
 }
 
 pub(crate) fn check(global: &GlobalArgs, profile: Option<&str>) -> CmdResult {
-    let ws = load(global.config.as_deref())?;
-    check_profile(&ws, profile)?;
-    let chain = auth::chain_for(&ws, profile, &global.auth_source)?;
-    let ctx = auth::context(
-        &ws,
-        profile,
-        &cwd()?,
-        global.allow_tracked_secret,
-        &SystemEnv,
-    );
+    // With an explicit source and no `ndac.toml` there is nothing to load;
+    // the check only needs the source and the default API settings.
+    let standalone = !global.auth_source.is_empty()
+        && profile.is_none()
+        && root_path(global.config.as_deref()).is_err();
+    let (provider, chain, ctx) = if standalone {
+        let dir = cwd()?;
+        (
+            ProviderConfig::default(),
+            auth::chain(&global.auth_source, None, &AuthConfig::default())?,
+            auth::Context::new(&dir, &dir),
+        )
+    } else {
+        let ws = load(global.config.as_deref())?;
+        check_profile(&ws, profile)?;
+        (
+            ws.provider(),
+            auth::chain_for(&ws, profile, &global.auth_source)?,
+            auth::context(
+                &ws,
+                profile,
+                &cwd()?,
+                global.allow_tracked_secret,
+                &SystemEnv,
+            ),
+        )
+    };
     let resolved = auth::resolve(&chain, &ctx, &SystemEnv)?;
     for w in &resolved.warnings {
         Output::warn(w);
     }
     write(Output::line(&format!("✓ source: {}", resolved.source)))?;
 
-    let client = api_client(&ws.provider(), resolved.key, &user_agent()).map_err(Failure::api)?;
+    let client = api_client(&provider, resolved.key, &user_agent()).map_err(Failure::api)?;
     let profiles = runtime()?
         .block_on(client.list_profiles())
         .map_err(Failure::api)?;

@@ -340,3 +340,21 @@ async fn targeted_apply_verifies_only_the_target() {
     assert_eq!(live["name"], "B");
     assert_eq!(live["settings"]["web3"], false);
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn auth_check_with_an_explicit_source_needs_no_configuration() {
+    // An empty directory: no ndac.toml. The source is missing, so this is an
+    // authentication failure (3), not a configuration one (4).
+    let dir = tempfile::tempdir().unwrap();
+    let mut cmd = ndac(dir.path());
+    cmd.args(["auth", "check", "--auth-source", "env:NDAC_TEST_UNSET_KEY"])
+        .env_remove("NDAC_TEST_UNSET_KEY");
+    let o = run(cmd).await;
+    assert_eq!(o.status.code(), Some(3), "{}", err(&o));
+
+    // Without a source the missing configuration is still reported.
+    let mut cmd = ndac(dir.path());
+    cmd.args(["auth", "check"]).env_remove("NDAC_AUTH_SOURCE");
+    let o = run(cmd).await;
+    assert_eq!(o.status.code(), Some(4), "{}", err(&o));
+}
