@@ -342,24 +342,6 @@ async fn targeted_apply_verifies_only_the_target() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn auth_check_with_an_explicit_source_needs_no_configuration() {
-    // An empty directory: no ndac.toml. The source is missing, so this is an
-    // authentication failure (3), not a configuration one (4).
-    let dir = tempfile::tempdir().unwrap();
-    let mut cmd = ndac(dir.path());
-    cmd.args(["auth", "check", "--auth-source", "env:NDAC_TEST_UNSET_KEY"])
-        .env_remove("NDAC_TEST_UNSET_KEY");
-    let o = run(cmd).await;
-    assert_eq!(o.status.code(), Some(3), "{}", err(&o));
-
-    // Without a source the missing configuration is still reported.
-    let mut cmd = ndac(dir.path());
-    cmd.args(["auth", "check"]).env_remove("NDAC_AUTH_SOURCE");
-    let o = run(cmd).await;
-    assert_eq!(o.status.code(), Some(4), "{}", err(&o));
-}
-
-#[tokio::test(flavor = "multi_thread")]
 async fn a_target_matching_no_profile_is_a_config_error() {
     let api = FakeApi::start().await.unwrap();
     let id = api.insert_profile(&json!({ "name": "A" }));
@@ -397,6 +379,25 @@ async fn a_target_matching_no_profile_is_a_config_error() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
+async fn quiet_apply_hides_the_plan_but_not_the_result() {
+    let api = FakeApi::start().await.unwrap();
+    let id = api.insert_profile(&json!({ "name": "A" }));
+    let dir = init(&api);
+    fs::write(
+        dir.path().join("profiles/p.toml"),
+        format!("id = {id:?}\nname = \"B\"\n"),
+    )
+    .unwrap();
+    let mut cmd = ndac(dir.path());
+    cmd.args(["-q", "apply", "--auto-approve"]);
+    let o = run(cmd).await;
+    assert!(o.status.success(), "{}", err(&o));
+    assert_eq!(out(&o), "", "the plan is not requested output");
+    assert_eq!(err(&o), "");
+    assert_eq!(api.profile(&id).unwrap()["name"], "B");
+}
+
+#[tokio::test(flavor = "multi_thread")]
 async fn rollback_empties_a_list_only_with_allow_destroy() {
     let api = FakeApi::start().await.unwrap();
     let id = api.insert_profile(&json!({ "denylist": [{ "id": "a.example", "active": true }] }));
@@ -428,20 +429,68 @@ async fn rollback_empties_a_list_only_with_allow_destroy() {
 }
 
 #[tokio::test(flavor = "multi_thread")]
-async fn quiet_apply_hides_the_plan_but_not_the_result() {
+async fn auth_check_with_an_explicit_source_needs_no_configuration() {
+    // An empty directory: no ndac.toml. The source is missing, so this is an
+    // authentication failure (3), not a configuration one (4).
+    let dir = tempfile::tempdir().unwrap();
+    let mut cmd = ndac(dir.path());
+    cmd.args(["auth", "check", "--auth-source", "env:NDAC_TEST_UNSET_KEY"])
+        .env_remove("NDAC_TEST_UNSET_KEY");
+    let o = run(cmd).await;
+    assert_eq!(o.status.code(), Some(3), "{}", err(&o));
+
+    // Without a source the missing configuration is still reported.
+    let mut cmd = ndac(dir.path());
+    cmd.args(["auth", "check"]).env_remove("NDAC_AUTH_SOURCE");
+    let o = run(cmd).await;
+    assert_eq!(o.status.code(), Some(4), "{}", err(&o));
+}
+
+#[cfg(unix)]
+#[allow(
+    clippy::disallowed_methods,
+    reason = "the test starts the binary itself to signal it"
+)]
+#[tokio::test(flavor = "multi_thread")]
+async fn ctrl_c_stops_between_calls_and_exits_130() {
+    use std::{process::Stdio, time::Duration};
+
     let api = FakeApi::start().await.unwrap();
     let id = api.insert_profile(&json!({ "name": "A" }));
     let dir = init(&api);
     fs::write(
         dir.path().join("profiles/p.toml"),
-        format!("id = {id:?}\nname = \"B\"\n"),
+        format!(
+            "id = {id:?}\nname = \"B\"\n[security]\nnrd = true\n[parentalControl]\nsafeSearch = true\n\
+             [settings]\nweb3 = true\n[settings.performance]\ncacheBoost = true\n"
+        ),
     )
     .unwrap();
-    let mut cmd = ndac(dir.path());
-    cmd.args(["-q", "apply", "--auto-approve"]);
-    let o = run(cmd).await;
-    assert!(o.status.success(), "{}", err(&o));
-    assert_eq!(out(&o), "", "the plan is not requested output");
-    assert_eq!(err(&o), "");
-    assert_eq!(api.profile(&id).unwrap()["name"], "B");
+    api.set_latency(Duration::from_millis(400));
+
+    let bin = Command::cargo_bin("ndac").unwrap();
+    let child = std::process::Command::new(bin.get_program())
+        .args(["apply", "--auto-approve"])
+        .current_dir(dir.path())
+        .env("NO_COLOR", "1")
+        .env("XDG_CONFIG_HOME", dir.path())
+        .env("NEXTDNS_API_KEY", TEST_KEY)
+        .env("NDAC_AUTH_SOURCE", "env:NEXTDNS_API_KEY")
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    // One read to fetch the profile, then the calls run 400 ms apart.
+    tokio::time::sleep(Duration::from_millis(1000)).await;
+    let killed = std::process::Command::new("kill")
+        .args(["-INT", &child.id().to_string()])
+        .status()
+        .unwrap();
+    assert!(killed.success());
+    let o = tokio::task::spawn_blocking(move || child.wait_with_output().unwrap())
+        .await
+        .unwrap();
+    let stderr = err(&o);
+    assert_eq!(o.status.code(), Some(130), "{stderr}");
+    assert!(stderr.contains("before the interrupt"), "{stderr}");
 }
