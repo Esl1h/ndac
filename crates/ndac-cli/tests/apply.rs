@@ -358,3 +358,40 @@ async fn auth_check_with_an_explicit_source_needs_no_configuration() {
     let o = run(cmd).await;
     assert_eq!(o.status.code(), Some(4), "{}", err(&o));
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn a_target_matching_no_profile_is_a_config_error() {
+    let api = FakeApi::start().await.unwrap();
+    let id = api.insert_profile(&json!({ "name": "A" }));
+    let dir = init(&api);
+    fs::write(
+        dir.path().join("profiles/p.toml"),
+        format!("id = {id:?}\nname = \"B\"\n"),
+    )
+    .unwrap();
+    for args in [
+        &["plan", "--target", "nope"][..],
+        &["apply", "--auto-approve", "--target", "nope"],
+        &["drift", "--target", "nope"],
+        &[
+            "reconcile",
+            "--prefer",
+            "code",
+            "--non-interactive",
+            "--target",
+            "nope",
+        ],
+    ] {
+        let mut cmd = ndac(dir.path());
+        cmd.args(args);
+        let o = run(cmd).await;
+        assert_eq!(o.status.code(), Some(4), "{args:?}: {}", err(&o));
+        assert!(err(&o).contains("matches no profile"), "{}", err(&o));
+    }
+    assert_eq!(api.profile(&id).unwrap()["name"], "A");
+
+    // A target that does match still works.
+    let mut cmd = ndac(dir.path());
+    cmd.args(["plan", "--target", "p"]);
+    assert!(run(cmd).await.status.success());
+}

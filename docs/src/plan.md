@@ -44,7 +44,8 @@ scheduled checks, and `ndac reconcile` resolves it; see
 
 - `--target PATH` limits the plan to a profile (`casa`), a section
   (`casa.denylist`) or a section in every profile (`*.privacy.blocklists`).
-  Repeatable.
+  Repeatable. A target whose profile part matches no profile is a
+  configuration error (exit 4), not an empty plan.
 - `--detailed-exitcode` exits with 2 when there are changes, 0 when none.
 - `--format text|json|markdown`.
 

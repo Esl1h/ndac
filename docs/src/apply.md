@@ -69,6 +69,6 @@ it like `apply`. The configuration files are not changed, so the next
 | 1 | Error, cancelled confirmation, or verification failure |
 | 2 | Changes pending (`plan --detailed-exitcode`, `drift`) |
 | 3 | Authentication error |
-| 4 | Configuration error |
+| 4 | Configuration error, including a `--target` that matches no profile |
 | 5 | API error after retries |
 | 130 | Interrupted by Ctrl-C |
