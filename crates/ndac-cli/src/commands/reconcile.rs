@@ -246,6 +246,7 @@ pub(crate) fn run(
     let ws = load(global.config.as_deref())?;
     let desired = select(&ws, &targets)?;
     let mut session = Session::new(ws, global)?;
+    let _lock = engine::lock(session.store.dir())?;
     let live = session.fetch_live(&desired)?;
     let drift = drift_only(session.plan(&desired, &live)?.filtered(&targets));
     if drift.profiles.iter().all(|p| p.changes.is_empty()) {

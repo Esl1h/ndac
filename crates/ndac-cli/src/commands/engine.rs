@@ -67,9 +67,15 @@ fn confirm(summary: &str) -> Result<bool, Failure> {
 }
 
 /// Holds `<snapshot_dir>/.lock` for the lifetime of the value.
-struct Lock(#[allow(dead_code, reason = "held for its lock")] File);
+/// Index into the work list (`usize::MAX` for a profile deletion), profile
+/// ID, outcome and number of calls.
+type JobResult = (usize, Option<String>, Outcome, usize);
 
-fn lock(dir: &Path) -> Result<Lock, Failure> {
+/// Taken before the live state is read, so that the plan an apply confirms
+/// cannot go stale because of a concurrent apply in the same checkout.
+pub(crate) struct Lock(#[allow(dead_code, reason = "held for its lock")] File);
+
+pub(crate) fn lock(dir: &Path) -> Result<Lock, Failure> {
     fs::create_dir_all(dir).map_err(|e| other(format!("cannot create {}: {e}", dir.display())))?;
     let path = dir.join(".lock");
     let file = File::options()
@@ -147,7 +153,6 @@ pub(crate) fn run(
         return Ok(Exit::Error);
     }
 
-    let _lock = lock(session.store.dir())?;
     let cancel = Arc::new(AtomicBool::new(false));
     {
         let cancel = Arc::clone(&cancel);

@@ -24,6 +24,7 @@ pub(crate) fn run(
     let ws = load(global.config.as_deref())?;
     let desired = select(&ws, &targets)?;
     let mut session = Session::new(ws, global)?;
+    let _lock = engine::lock(session.store.dir())?;
     let live = session.fetch_live(&desired)?;
     let full = session.plan(&desired, &live)?.filtered(&targets);
     let work = desired
@@ -54,6 +55,7 @@ pub(crate) fn rollback(
 ) -> CmdResult {
     let ws = load(global.config.as_deref())?;
     let mut session = Session::new(ws, global)?;
+    let _lock = engine::lock(session.store.dir())?;
     let entry = session
         .store
         .find(snapshot, profile)
