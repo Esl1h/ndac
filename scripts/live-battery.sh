@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Live test battery for ndac against a throwaway NextDNS profile.
-# Usage: KEY_FILE=path/to/key PROFILE=6aa4d7 scripts/live-battery.sh
+# Usage: KEY_FILE=path/to/key PROFILE=abc123 scripts/live-battery.sh
 # KEY_FILE holds only the API key (chmod 600). Restores the profile at the
 # end. Needs both builds: cargo build -p ndac, and
 # cargo build -p ndac --features unstable-endpoints --target-dir target/unstable
@@ -8,7 +8,7 @@ set -uo pipefail
 
 KEY_FILE=${KEY_FILE:?set KEY_FILE to a file holding the API key}
 REPO=${REPO:-$(git -C "$(dirname "$0")" rev-parse --show-toplevel)}
-PROFILE=${PROFILE:-6aa4d7}
+PROFILE=${PROFILE:?set PROFILE to the id of a throwaway profile}
 W=$(mktemp -d)
 trap 'rm -rf "$W"' EXIT
 PASS=0
