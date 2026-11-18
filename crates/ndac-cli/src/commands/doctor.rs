@@ -54,9 +54,13 @@ fn checklist(r: &ResolverTest, profile: Option<&str>, device: Option<&str>) -> (
     let seen = r.profile.as_deref();
     match (profile, seen) {
         (Some(want), Some(got)) if got == want => lines.push(format!("✓ profile {got}")),
-        (Some(_), Some(got)) if got.starts_with("fp") => lines.push(format!(
-            "? profile shown as fingerprint {got}, not as an ID; cannot compare"
-        )),
+        (Some(_), Some(got)) if got.starts_with("fp") => {
+            // An unverifiable expectation must not read as a pass.
+            ok = false;
+            lines.push(format!(
+                "? profile shown as fingerprint {got}, not as an ID; cannot compare"
+            ));
+        }
         (Some(want), Some(got)) => {
             ok = false;
             lines.push(format!("✗ profile {got}, expected {want}"));
@@ -129,7 +133,9 @@ mod tests {
 
         let fp = result(r#"{"status":"ok","protocol":"UDP","profile":"fp00"}"#);
         let (lines, ok) = checklist(&fp, Some("abc123"), None);
-        assert!(ok, "{lines:?}");
+        assert!(!ok, "an expectation that cannot be compared must fail");
+        let (_, ok) = checklist(&fp, None, None);
+        assert!(ok, "no expectation, nothing to fail");
         assert!(lines[1].starts_with("! protocol UDP"), "{lines:?}");
         assert!(
             lines[2].starts_with("? profile shown as fingerprint"),
