@@ -29,7 +29,8 @@ Symbols: `+` add, `-` remove, `~` change, `!` a section changed outside
 
 ## Drift
 
-After every verified apply, `ndac` stores a `post-apply` snapshot of the
+After every verified apply, and after `ndac import` (which makes the files
+equal to the live profile), `ndac` stores a `post-apply` snapshot of the
 live profile. `plan` compares each change against it:
 
 - **pending**: the configuration changed since the last apply;
