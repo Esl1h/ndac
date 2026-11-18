@@ -426,3 +426,22 @@ async fn rollback_empties_a_list_only_with_allow_destroy() {
     assert!(o.status.success(), "{}", err(&o));
     assert_eq!(api.profile(&id).unwrap()["denylist"], json!([]));
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn quiet_apply_hides_the_plan_but_not_the_result() {
+    let api = FakeApi::start().await.unwrap();
+    let id = api.insert_profile(&json!({ "name": "A" }));
+    let dir = init(&api);
+    fs::write(
+        dir.path().join("profiles/p.toml"),
+        format!("id = {id:?}\nname = \"B\"\n"),
+    )
+    .unwrap();
+    let mut cmd = ndac(dir.path());
+    cmd.args(["-q", "apply", "--auto-approve"]);
+    let o = run(cmd).await;
+    assert!(o.status.success(), "{}", err(&o));
+    assert_eq!(out(&o), "", "the plan is not requested output");
+    assert_eq!(err(&o), "");
+    assert_eq!(api.profile(&id).unwrap()["name"], "B");
+}

@@ -123,9 +123,13 @@ pub(crate) fn run(
     } else {
         Vec::new()
     };
+    // `-q` hides the plan unless a person has to read it to confirm.
+    let show_plan = !out.quiet || !opts.auto_approve;
     if work.is_empty() && removed.is_empty() {
-        Output::artifact(&plan::render_text(&shown, out.stdout_color))
-            .map_err(|e| other(e.to_string()))?;
+        if show_plan {
+            Output::artifact(&plan::render_text(&shown, out.stdout_color))
+                .map_err(|e| other(e.to_string()))?;
+        }
         return Ok(Exit::Success);
     }
 
@@ -140,8 +144,10 @@ pub(crate) fn run(
         }
     }
 
-    Output::artifact(&plan::render_text(&shown, out.stdout_color))
-        .map_err(|e| other(e.to_string()))?;
+    if show_plan {
+        Output::artifact(&plan::render_text(&shown, out.stdout_color))
+            .map_err(|e| other(e.to_string()))?;
+    }
     if !removed.is_empty() {
         out.status(&format!(
             "{} profile(s) will be DELETED from NextDNS.",
