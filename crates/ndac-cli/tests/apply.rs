@@ -480,8 +480,17 @@ async fn ctrl_c_stops_between_calls_and_exits_130() {
         .stderr(Stdio::piped())
         .spawn()
         .unwrap();
-    // One read to fetch the profile, then the calls run 400 ms apart.
-    tokio::time::sleep(Duration::from_millis(1000)).await;
+    // The handler is installed before the first write, and the calls run
+    // 400 ms apart, so the first write is a safe moment to interrupt. A fixed
+    // sleep races with process start-up on slow runners.
+    let started = std::time::Instant::now();
+    while !api.request_lines().iter().any(|l| !l.starts_with("GET")) {
+        assert!(
+            started.elapsed() < Duration::from_secs(20),
+            "apply never started writing"
+        );
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
     let killed = std::process::Command::new("kill")
         .args(["-INT", &child.id().to_string()])
         .status()
