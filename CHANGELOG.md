@@ -6,6 +6,13 @@ and the project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-11-18
+
+### Fixed
+
+- **cli:** Fix the bugs found against the real API ([#19](https://github.com/Esl1h/ndac/pull/19))
+
+
 ## [0.1.1] - 2026-10-24
 
 ### Fixed
