@@ -8,7 +8,7 @@ use super::{
     CmdResult, Failure,
     engine::{self, Options, Work},
     load,
-    plan::parse_targets,
+    plan::{parse_targets, select},
     session::Session,
 };
 use crate::{cli::GlobalArgs, output::Output};
@@ -22,11 +22,9 @@ pub(crate) fn run(
 ) -> CmdResult {
     let targets = parse_targets(targets)?;
     let ws = load(global.config.as_deref())?;
-    let mut desired = ws.resolve_all()?;
-    if !targets.is_empty() {
-        desired.retain(|d| targets.iter().any(|t| t.matches_profile(&d.key)));
-    }
+    let desired = select(&ws, &targets)?;
     let mut session = Session::new(ws, global)?;
+    let _lock = engine::lock(session.store.dir())?;
     let live = session.fetch_live(&desired)?;
     let full = session.plan(&desired, &live)?.filtered(&targets);
     let work = desired
@@ -52,10 +50,12 @@ pub(crate) fn rollback(
     snapshot: &str,
     profile: Option<&str>,
     auto_approve: bool,
+    allow_destroy: bool,
     out: Output,
 ) -> CmdResult {
     let ws = load(global.config.as_deref())?;
     let mut session = Session::new(ws, global)?;
+    let _lock = engine::lock(session.store.dir())?;
     let entry = session
         .store
         .find(snapshot, profile)
@@ -84,7 +84,7 @@ pub(crate) fn rollback(
     let p = plan::diff(&desired, live.as_ref());
     let opts = Options {
         auto_approve,
-        allow_destroy: true,
+        allow_destroy,
         write_back: false,
     };
     out.status(&format!(

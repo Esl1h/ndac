@@ -29,7 +29,8 @@ Symbols: `+` add, `-` remove, `~` change, `!` a section changed outside
 
 ## Drift
 
-After every verified apply, `ndac` stores a `post-apply` snapshot of the
+After every verified apply, and after `ndac import` (which makes the files
+equal to the live profile), `ndac` stores a `post-apply` snapshot of the
 live profile. `plan` compares each change against it:
 
 - **pending**: the configuration changed since the last apply;
@@ -44,7 +45,8 @@ scheduled checks, and `ndac reconcile` resolves it; see
 
 - `--target PATH` limits the plan to a profile (`casa`), a section
   (`casa.denylist`) or a section in every profile (`*.privacy.blocklists`).
-  Repeatable.
+  Repeatable. A target whose profile part matches no profile is a
+  configuration error (exit 4), not an empty plan.
 - `--detailed-exitcode` exits with 2 when there are changes, 0 when none.
 - `--format text|json|markdown`.
 

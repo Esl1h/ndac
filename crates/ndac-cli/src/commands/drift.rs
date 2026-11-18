@@ -12,7 +12,11 @@ use ndac_core::{
     plan::{drift_only, render_github, render_json, render_prom, render_text},
 };
 
-use super::{CmdResult, Failure, cwd, load, plan::parse_targets, session::Session};
+use super::{
+    CmdResult, Failure, cwd, load,
+    plan::{parse_targets, select},
+    session::Session,
+};
 use crate::{
     cli::{DriftFormat, GlobalArgs},
     output::{Exit, Output},
@@ -64,10 +68,7 @@ pub(crate) fn run(
     }
     let targets = parse_targets(targets)?;
     let ws = load(global.config.as_deref())?;
-    let mut desired = ws.resolve_all()?;
-    if !targets.is_empty() {
-        desired.retain(|d| targets.iter().any(|t| t.matches_profile(&d.key)));
-    }
+    let desired = select(&ws, &targets)?;
     let mut session = Session::new(ws, global)?;
     let live = session.fetch_live(&desired)?;
     let drift = drift_only(session.plan(&desired, &live)?.filtered(&targets));

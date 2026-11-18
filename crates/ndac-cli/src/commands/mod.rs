@@ -34,13 +34,15 @@ pub(crate) enum Failure {
     Config(ConfigErrors),
     Auth(Report),
     Api(Report),
+    /// A `--target` that selects no profile.
+    Target(Report),
     Other(Report),
 }
 
 impl Failure {
     pub(crate) fn exit(&self) -> Exit {
         match self {
-            Self::Config(_) => Exit::Config,
+            Self::Config(_) | Self::Target(_) => Exit::Config,
             Self::Auth(_) => Exit::Auth,
             Self::Api(_) => Exit::Api,
             Self::Other(_) => Exit::Error,
@@ -50,7 +52,7 @@ impl Failure {
     pub(crate) fn report(self) -> Report {
         match self {
             Self::Config(e) => Report::new(e),
-            Self::Auth(r) | Self::Api(r) | Self::Other(r) => r,
+            Self::Auth(r) | Self::Api(r) | Self::Target(r) | Self::Other(r) => r,
         }
     }
 

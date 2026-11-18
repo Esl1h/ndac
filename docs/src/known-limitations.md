@@ -71,10 +71,10 @@ patterns.
 
 ## Apply
 
-- The Ctrl-C path is not covered by automated tests; it relies on checking
-  a flag between calls.
 - The lock is advisory and per checkout: two checkouts of the same
-  repository can still apply concurrently.
+  repository can still apply concurrently. Within one checkout it is taken
+  before the live state is read, so a confirmed plan cannot be overtaken by
+  another apply.
 - The workflow written by `ndac init --github-actions` keeps snapshots as
   workflow artifacts, which expire (90 days by default). With no apply in
   that time, drift is no longer detected until the next apply.

@@ -76,14 +76,15 @@ NextDNS and prints a checklist:
 ```
 
 It exits with `0` when every check passes, `2` on a mismatch (queries not
-reaching NextDNS, another profile or device name) and `5` when the test
-service cannot be reached. Unencrypted queries (`UDP`) are reported with `!`
+reaching NextDNS, another profile or device name, or an expected profile that
+cannot be compared) and `5` when the test service cannot be reached. Unencrypted queries (`UDP`) are reported with `!`
 but do not fail the check.
 
 `--expect-profile` takes a profile key from the configuration, if there is
 one, or a NextDNS profile ID. The test service sometimes shows the profile as
-a fingerprint (`fp…`) instead of its ID; then the profile cannot be compared
-and is reported with `?`.
+a fingerprint (`fp…`) instead of its ID; then the profile cannot be compared,
+is reported with `?` and counts as a failed check, because the expectation
+could not be confirmed.
 
 `doctor` does not use the API key and does not need a configuration file.
 Each run asks a fresh random subdomain of `test.nextdns.io`, so the answer

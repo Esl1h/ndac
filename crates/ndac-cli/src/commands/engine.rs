@@ -67,9 +67,15 @@ fn confirm(summary: &str) -> Result<bool, Failure> {
 }
 
 /// Holds `<snapshot_dir>/.lock` for the lifetime of the value.
-struct Lock(#[allow(dead_code, reason = "held for its lock")] File);
+/// Index into the work list (`usize::MAX` for a profile deletion), profile
+/// ID, outcome and number of calls.
+type JobResult = (usize, Option<String>, Outcome, usize);
 
-fn lock(dir: &Path) -> Result<Lock, Failure> {
+/// Taken before the live state is read, so that the plan an apply confirms
+/// cannot go stale because of a concurrent apply in the same checkout.
+pub(crate) struct Lock(#[allow(dead_code, reason = "held for its lock")] File);
+
+pub(crate) fn lock(dir: &Path) -> Result<Lock, Failure> {
     fs::create_dir_all(dir).map_err(|e| other(format!("cannot create {}: {e}", dir.display())))?;
     let path = dir.join(".lock");
     let file = File::options()
@@ -88,8 +94,8 @@ fn lock(dir: &Path) -> Result<Lock, Failure> {
     }
 }
 
-fn to_json(p: &Profile) -> Value {
-    serde_json::to_value(p).unwrap_or(Value::Null)
+fn to_json(p: &Profile) -> Result<Value, Failure> {
+    serde_json::to_value(p).map_err(|e| other(format!("cannot serialize the profile: {e}")))
 }
 
 /// Applies `work` (and deletes `removed` profiles when allowed). Prints the
@@ -117,9 +123,13 @@ pub(crate) fn run(
     } else {
         Vec::new()
     };
+    // `-q` hides the plan unless a person has to read it to confirm.
+    let show_plan = !out.quiet || !opts.auto_approve;
     if work.is_empty() && removed.is_empty() {
-        Output::artifact(&plan::render_text(&shown, out.stdout_color))
-            .map_err(|e| other(e.to_string()))?;
+        if show_plan {
+            Output::artifact(&plan::render_text(&shown, out.stdout_color))
+                .map_err(|e| other(e.to_string()))?;
+        }
         return Ok(Exit::Success);
     }
 
@@ -134,8 +144,10 @@ pub(crate) fn run(
         }
     }
 
-    Output::artifact(&plan::render_text(&shown, out.stdout_color))
-        .map_err(|e| other(e.to_string()))?;
+    if show_plan {
+        Output::artifact(&plan::render_text(&shown, out.stdout_color))
+            .map_err(|e| other(e.to_string()))?;
+    }
     if !removed.is_empty() {
         out.status(&format!(
             "{} profile(s) will be DELETED from NextDNS.",
@@ -147,7 +159,6 @@ pub(crate) fn run(
         return Ok(Exit::Error);
     }
 
-    let _lock = lock(session.store.dir())?;
     let cancel = Arc::new(AtomicBool::new(false));
     {
         let cancel = Arc::clone(&cancel);
@@ -167,7 +178,7 @@ pub(crate) fn run(
         if let (Some(id), Some(live)) = (&w.desired.id, &w.live) {
             session
                 .store
-                .save(&w.desired.key, id, SnapshotKind::PreApply, &to_json(live))
+                .save(&w.desired.key, id, SnapshotKind::PreApply, &to_json(live)?)
                 .map_err(|e| other(format!("cannot write the pre-apply snapshot: {e}")))?;
         }
     }
@@ -194,7 +205,7 @@ pub(crate) fn run(
         ));
     }
     let job_count = jobs.len();
-    let outcomes: Vec<(usize, Option<String>, Outcome, usize)> = session.rt.block_on({
+    let (outcomes, panicked): (Vec<JobResult>, usize) = session.rt.block_on({
         let cancel = Arc::clone(&cancel);
         async move {
             let mut set = JoinSet::new();
@@ -206,16 +217,26 @@ pub(crate) fn run(
                 });
             }
             let mut out = Vec::with_capacity(job_count);
-            while let Some(Ok(r)) = set.join_next().await {
-                out.push(r);
+            let mut panicked = 0_usize;
+            while let Some(r) = set.join_next().await {
+                match r {
+                    Ok(r) => out.push(r),
+                    Err(_) => panicked += 1,
+                }
             }
-            out
+            (out, panicked)
         }
     });
 
     let mut failed = false;
     let mut auth_failed = false;
     let mut verify_failed = false;
+    if panicked > 0 {
+        failed = true;
+        out.status(&format!(
+            "✗ {panicked} apply task(s) stopped unexpectedly; their profiles were not verified"
+        ));
+    }
     let mut by_index: Vec<Option<(Outcome, usize)>> = (0..work.len()).map(|_| None).collect();
     for (i, id, outcome, total) in outcomes {
         if i == usize::MAX {
@@ -250,16 +271,21 @@ pub(crate) fn run(
         if let Some(new_id) = &outcome.created_id {
             w.desired.id = Some(new_id.clone());
             if opts.write_back && w.desired.source.is_file() {
-                apply::write_id(&w.desired.source, new_id).map_err(|e| {
-                    other(format!(
-                        "profile created as {new_id}, but writing the ID to {} failed: {e}",
+                // The profile exists at NextDNS already: report the ID, then
+                // keep verifying so the other profiles are not left unchecked.
+                match apply::write_id(&w.desired.source, new_id) {
+                    Ok(()) => out.status(&format!(
+                        "  wrote id = \"{new_id}\" to {}",
                         w.desired.source.display()
-                    ))
-                })?;
-                out.status(&format!(
-                    "  wrote id = \"{new_id}\" to {}",
-                    w.desired.source.display()
-                ));
+                    )),
+                    Err(e) => {
+                        failed = true;
+                        out.status(&format!(
+                            "✗ {key}: profile created as {new_id}, but writing the ID to {} failed: {e}",
+                            w.desired.source.display()
+                        ));
+                    }
+                }
             }
         }
         if let Some((call, e)) = &outcome.error {
@@ -281,10 +307,17 @@ pub(crate) fn run(
 
         // Verify: the live profile must now match.
         let client = session.client(&key)?;
-        let after = session
-            .rt
-            .block_on(live_profile(&client, &id))
-            .map_err(Failure::api)?;
+        let after = match session.rt.block_on(live_profile(&client, &id)) {
+            Ok(p) => p,
+            Err(e) => {
+                failed = true;
+                auth_failed |= e.is_auth();
+                out.status(&format!(
+                    "✗ {key} ({id}): cannot read the profile back: {e}"
+                ));
+                continue;
+            }
+        };
         // Only what was planned counts: `--target` and `reconcile` leave
         // other differences alone on purpose.
         let mut remaining = plan::diff(&w.desired, Some(&after));
@@ -302,7 +335,7 @@ pub(crate) fn run(
         };
         session
             .store
-            .save(&key, &id, kind, &to_json(&after))
+            .save(&key, &id, kind, &to_json(&after)?)
             .map_err(|e| other(format!("cannot write the snapshot: {e}")))?;
         if complete && remaining.changes.is_empty() {
             out.status(&format!(

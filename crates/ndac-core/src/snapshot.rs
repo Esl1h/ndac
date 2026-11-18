@@ -30,7 +30,8 @@ pub const DEFAULT_KEEP: usize = 50;
 pub enum SnapshotKind {
     /// Live state just before an apply.
     PreApply,
-    /// Live state after a verified apply.
+    /// Live state after a verified apply, or after `import`: both leave the
+    /// files equal to the live profile, which is the baseline drift uses.
     PostApply,
     /// Live state after an apply that failed verification.
     FailedApply,

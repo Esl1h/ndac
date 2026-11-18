@@ -340,3 +340,166 @@ async fn targeted_apply_verifies_only_the_target() {
     assert_eq!(live["name"], "B");
     assert_eq!(live["settings"]["web3"], false);
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn a_target_matching_no_profile_is_a_config_error() {
+    let api = FakeApi::start().await.unwrap();
+    let id = api.insert_profile(&json!({ "name": "A" }));
+    let dir = init(&api);
+    fs::write(
+        dir.path().join("profiles/p.toml"),
+        format!("id = {id:?}\nname = \"B\"\n"),
+    )
+    .unwrap();
+    for args in [
+        &["plan", "--target", "nope"][..],
+        &["apply", "--auto-approve", "--target", "nope"],
+        &["drift", "--target", "nope"],
+        &[
+            "reconcile",
+            "--prefer",
+            "code",
+            "--non-interactive",
+            "--target",
+            "nope",
+        ],
+    ] {
+        let mut cmd = ndac(dir.path());
+        cmd.args(args);
+        let o = run(cmd).await;
+        assert_eq!(o.status.code(), Some(4), "{args:?}: {}", err(&o));
+        assert!(err(&o).contains("matches no profile"), "{}", err(&o));
+    }
+    assert_eq!(api.profile(&id).unwrap()["name"], "A");
+
+    // A target that does match still works.
+    let mut cmd = ndac(dir.path());
+    cmd.args(["plan", "--target", "p"]);
+    assert!(run(cmd).await.status.success());
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn quiet_apply_hides_the_plan_but_not_the_result() {
+    let api = FakeApi::start().await.unwrap();
+    let id = api.insert_profile(&json!({ "name": "A" }));
+    let dir = init(&api);
+    fs::write(
+        dir.path().join("profiles/p.toml"),
+        format!("id = {id:?}\nname = \"B\"\n"),
+    )
+    .unwrap();
+    let mut cmd = ndac(dir.path());
+    cmd.args(["-q", "apply", "--auto-approve"]);
+    let o = run(cmd).await;
+    assert!(o.status.success(), "{}", err(&o));
+    assert_eq!(out(&o), "", "the plan is not requested output");
+    assert_eq!(err(&o), "");
+    assert_eq!(api.profile(&id).unwrap()["name"], "B");
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn rollback_empties_a_list_only_with_allow_destroy() {
+    let api = FakeApi::start().await.unwrap();
+    let id = api.insert_profile(&json!({ "denylist": [{ "id": "a.example", "active": true }] }));
+    let dir = init(&api);
+    fs::write(dir.path().join("profiles/p.toml"), format!("id = {id:?}\n")).unwrap();
+    let store = SnapshotStore::new(dir.path(), &ProviderConfig::default());
+    let snap = store
+        .save("p", &id, SnapshotKind::PreApply, &json!({ "denylist": [] }))
+        .unwrap();
+
+    let mut cmd = ndac(dir.path());
+    cmd.args(["rollback", &snap.id, "--auto-approve"]);
+    let o = run(cmd).await;
+    assert_eq!(o.status.code(), Some(1), "{}", err(&o));
+    assert!(err(&o).contains("would remove every item"), "{}", err(&o));
+    assert_eq!(
+        api.profile(&id).unwrap()["denylist"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+
+    let mut cmd = ndac(dir.path());
+    cmd.args(["rollback", &snap.id, "--auto-approve", "--allow-destroy"]);
+    let o = run(cmd).await;
+    assert!(o.status.success(), "{}", err(&o));
+    assert_eq!(api.profile(&id).unwrap()["denylist"], json!([]));
+}
+
+#[tokio::test(flavor = "multi_thread")]
+async fn auth_check_with_an_explicit_source_needs_no_configuration() {
+    // An empty directory: no ndac.toml. The source is missing, so this is an
+    // authentication failure (3), not a configuration one (4).
+    let dir = tempfile::tempdir().unwrap();
+    let mut cmd = ndac(dir.path());
+    cmd.args(["auth", "check", "--auth-source", "env:NDAC_TEST_UNSET_KEY"])
+        .env_remove("NDAC_TEST_UNSET_KEY");
+    let o = run(cmd).await;
+    assert_eq!(o.status.code(), Some(3), "{}", err(&o));
+
+    // Without a source the missing configuration is still reported.
+    let mut cmd = ndac(dir.path());
+    cmd.args(["auth", "check"]).env_remove("NDAC_AUTH_SOURCE");
+    let o = run(cmd).await;
+    assert_eq!(o.status.code(), Some(4), "{}", err(&o));
+}
+
+#[cfg(unix)]
+#[allow(
+    clippy::disallowed_methods,
+    reason = "the test starts the binary itself to signal it"
+)]
+#[tokio::test(flavor = "multi_thread")]
+async fn ctrl_c_stops_between_calls_and_exits_130() {
+    use std::{process::Stdio, time::Duration};
+
+    let api = FakeApi::start().await.unwrap();
+    let id = api.insert_profile(&json!({ "name": "A" }));
+    let dir = init(&api);
+    fs::write(
+        dir.path().join("profiles/p.toml"),
+        format!(
+            "id = {id:?}\nname = \"B\"\n[security]\nnrd = true\n[parentalControl]\nsafeSearch = true\n\
+             [settings]\nweb3 = true\n[settings.performance]\ncacheBoost = true\n"
+        ),
+    )
+    .unwrap();
+    api.set_latency(Duration::from_millis(400));
+
+    let bin = Command::cargo_bin("ndac").unwrap();
+    let child = std::process::Command::new(bin.get_program())
+        .args(["apply", "--auto-approve"])
+        .current_dir(dir.path())
+        .env("NO_COLOR", "1")
+        .env("XDG_CONFIG_HOME", dir.path())
+        .env("NEXTDNS_API_KEY", TEST_KEY)
+        .env("NDAC_AUTH_SOURCE", "env:NEXTDNS_API_KEY")
+        .stdout(Stdio::null())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    // The handler is installed before the first write, and the calls run
+    // 400 ms apart, so the first write is a safe moment to interrupt. A fixed
+    // sleep races with process start-up on slow runners.
+    let started = std::time::Instant::now();
+    while !api.request_lines().iter().any(|l| !l.starts_with("GET")) {
+        assert!(
+            started.elapsed() < Duration::from_secs(20),
+            "apply never started writing"
+        );
+        tokio::time::sleep(Duration::from_millis(20)).await;
+    }
+    let killed = std::process::Command::new("kill")
+        .args(["-INT", &child.id().to_string()])
+        .status()
+        .unwrap();
+    assert!(killed.success());
+    let o = tokio::task::spawn_blocking(move || child.wait_with_output().unwrap())
+        .await
+        .unwrap();
+    let stderr = err(&o);
+    assert_eq!(o.status.code(), Some(130), "{stderr}");
+    assert!(stderr.contains("before the interrupt"), "{stderr}");
+}
