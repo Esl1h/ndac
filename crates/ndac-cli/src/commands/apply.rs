@@ -49,6 +49,7 @@ pub(crate) fn rollback(
     snapshot: &str,
     profile: Option<&str>,
     auto_approve: bool,
+    allow_destroy: bool,
     out: Output,
 ) -> CmdResult {
     let ws = load(global.config.as_deref())?;
@@ -81,7 +82,7 @@ pub(crate) fn rollback(
     let p = plan::diff(&desired, live.as_ref());
     let opts = Options {
         auto_approve,
-        allow_destroy: true,
+        allow_destroy,
         write_back: false,
     };
     out.status(&format!(

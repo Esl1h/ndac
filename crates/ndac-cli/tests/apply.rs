@@ -395,3 +395,34 @@ async fn a_target_matching_no_profile_is_a_config_error() {
     cmd.args(["plan", "--target", "p"]);
     assert!(run(cmd).await.status.success());
 }
+
+#[tokio::test(flavor = "multi_thread")]
+async fn rollback_empties_a_list_only_with_allow_destroy() {
+    let api = FakeApi::start().await.unwrap();
+    let id = api.insert_profile(&json!({ "denylist": [{ "id": "a.example", "active": true }] }));
+    let dir = init(&api);
+    fs::write(dir.path().join("profiles/p.toml"), format!("id = {id:?}\n")).unwrap();
+    let store = SnapshotStore::new(dir.path(), &ProviderConfig::default());
+    let snap = store
+        .save("p", &id, SnapshotKind::PreApply, &json!({ "denylist": [] }))
+        .unwrap();
+
+    let mut cmd = ndac(dir.path());
+    cmd.args(["rollback", &snap.id, "--auto-approve"]);
+    let o = run(cmd).await;
+    assert_eq!(o.status.code(), Some(1), "{}", err(&o));
+    assert!(err(&o).contains("would remove every item"), "{}", err(&o));
+    assert_eq!(
+        api.profile(&id).unwrap()["denylist"]
+            .as_array()
+            .unwrap()
+            .len(),
+        1
+    );
+
+    let mut cmd = ndac(dir.path());
+    cmd.args(["rollback", &snap.id, "--auto-approve", "--allow-destroy"]);
+    let o = run(cmd).await;
+    assert!(o.status.success(), "{}", err(&o));
+    assert_eq!(api.profile(&id).unwrap()["denylist"], json!([]));
+}

@@ -88,11 +88,13 @@ fn dispatch(cli: Cli, out: Output) -> commands::CmdResult {
             snapshot,
             profile,
             auto_approve,
+            allow_destroy,
         } => commands::apply::rollback(
             &cli.global,
             &snapshot,
             profile.as_deref(),
             auto_approve,
+            allow_destroy,
             out,
         ),
         Command::Import {

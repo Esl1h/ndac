@@ -191,6 +191,9 @@ pub(crate) enum Command {
         /// Do not ask for confirmation.
         #[arg(long)]
         auto_approve: bool,
+        /// Allow the snapshot to leave a list empty.
+        #[arg(long)]
+        allow_destroy: bool,
     },
 
     /// Scaffold a configuration repository.
