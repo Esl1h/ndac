@@ -9,3 +9,6 @@ ndac.local.toml
 .env
 *.profraw
 lcov.info
+
+# Local planning notes
+/ROADMAP.md
