@@ -27,6 +27,12 @@ test:
 cov:
     cargo llvm-cov nextest --workspace --all-features --html
 
+# Live checks against a throwaway NextDNS profile (needs KEY_FILE and PROFILE)
+live-test:
+    cargo build -p ndac
+    cargo build -p ndac --features unstable-endpoints --target-dir target/unstable
+    scripts/live-battery.sh
+
 # Build API docs and the mdBook
 docs:
     RUSTDOCFLAGS="-D warnings" cargo doc --no-deps --workspace --all-features
