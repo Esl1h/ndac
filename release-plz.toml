@@ -4,6 +4,10 @@
 [workspace]
 # Release only when a release PR is merged, not on every push to main.
 release_always = false
+# Prepare a release only for commits that change what users get. Without
+# this, test, ci, chore and docs commits that touch a crate file also open a
+# release PR with an empty changelog. Breaking changes (`feat!:`) match too.
+release_commits = "^(feat|fix|perf|refactor|revert)[(:!]"
 # release.yml builds the binaries from the tag, uploads them and publishes
 # the GitHub release; release-plz only prepares it as a draft.
 git_release_draft = true
