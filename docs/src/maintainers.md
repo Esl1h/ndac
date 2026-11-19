@@ -37,6 +37,9 @@ configured in the GitHub UI or API.
 Releases are cut by merging the pull request that release-plz keeps open on
 `main` (`chore: release vX.Y.Z`):
 
+Before merging it, run the `E2E` workflow by hand (Actions, Run workflow) and
+approve the `nextdns-e2e` environment. It does not run on a schedule.
+
 1. `release-plz.yml` opens or updates that pull request on every push to
    `main`: version bump of `ndac`, `ndac-core` and `ndac-api` (one version
    for all three) and the new `CHANGELOG.md` section.

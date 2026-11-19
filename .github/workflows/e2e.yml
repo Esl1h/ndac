@@ -1,13 +1,13 @@
 name: E2E
 
 # Live end-to-end test against a dedicated throwaway NextDNS profile
-# (crates/ndac-cli/tests/live_e2e.rs). Never runs on pull requests. The
-# `nextdns-e2e` environment has required reviewers and holds the secrets
-# NEXTDNS_E2E_API_KEY and NEXTDNS_E2E_PROFILE_ID.
+# (crates/ndac-cli/tests/live_e2e.rs). Never runs on pull requests. Run it by
+# hand before a release: a schedule would wait for the reviewer approval of
+# the `nextdns-e2e` environment and expire unattended. The environment has
+# required reviewers and holds the secrets NEXTDNS_E2E_API_KEY and
+# NEXTDNS_E2E_PROFILE_ID.
 
 on:
-  schedule:
-    - cron: "23 5 * * 2"
   workflow_dispatch:
 
 permissions: {}
