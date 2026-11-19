@@ -99,7 +99,9 @@ fn import_apply_rollback() {
         .expect("pre-apply snapshot");
     check(
         &ndac(change.path())
-            .args(["rollback", &pre.id, "--auto-approve"])
+            // The pre-apply snapshot has an empty denylist, so rolling back
+            // empties a list and needs the flag.
+            .args(["rollback", &pre.id, "--auto-approve", "--allow-destroy"])
             .output()
             .unwrap(),
     );
