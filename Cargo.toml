@@ -36,7 +36,7 @@ globset = { version = "0.4.20", default-features = false }
 idna = "1.1.0"
 keyring = "4.2.0"
 miette = "7.6.0"
-nix = { version = "0.31.3", default-features = false }
+nix = { version = "0.32.0", default-features = false }
 httpdate = "1.0.3"
 # rustls with ring instead of reqwest's default aws-lc-rs: a lighter C build
 # for musl and aarch64 cross targets, and no MIT-0 code from aws-lc-sys.
